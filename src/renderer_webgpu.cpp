@@ -3686,12 +3686,14 @@ namespace bgfx { namespace webgpu
 		desc.implementation = reinterpret_cast<uint64_t>(&m_impl);
 		m_swapChain = _device.CreateSwapChain(nullptr, &desc);
 #else
+		wgpu::Instance instance = wgpu::CreateInstance(nullptr);
+
 		wgpu::SurfaceDescriptorFromCanvasHTMLSelector canvasDesc{};
 		canvasDesc.selector = "#canvas";
 
 		wgpu::SurfaceDescriptor surfDesc{};
 		surfDesc.nextInChain = &canvasDesc;
-		wgpu::Surface surface = wgpu::Instance().CreateSurface(&surfDesc);
+		wgpu::Surface surface = instance.CreateSurface(&surfDesc);
 
 		desc.presentMode = wgpu::PresentMode::Fifo;
 		desc.format = wgpu::TextureFormat::BGRA8Unorm;
