@@ -20,6 +20,7 @@ BX_PRAGMA_DIAGNOSTIC_IGNORED_CLANG_GCC("-Wshadow") // warning: declaration of 'u
 #include <SPIRV/SPVRemapper.h>
 #include <SPIRV/GlslangToSpv.h>
 #include <SPIRV/SpvTools.h>
+#include <webgpu/webgpu_cpp.h>
 #define SPIRV_CROSS_EXCEPTIONS_TO_ASSERTIONS
 #include <spirv_msl.hpp>
 #include <spirv_reflect.hpp>

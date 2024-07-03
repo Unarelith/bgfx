@@ -1414,6 +1414,11 @@ public static class bgfx
 		/// </summary>
 		Vulkan,
 	
+		/// <summary>
+		/// WebGPU
+		/// </summary>
+		WebGPU,
+	
 		Count
 	}
 	
