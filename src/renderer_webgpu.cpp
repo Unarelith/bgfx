@@ -56,16 +56,16 @@ namespace bgfx { namespace webgpu
 	template <> wgpu::BlendComponent			   defaultDescriptor() { return { wgpu::BlendOperation::Add, wgpu::BlendFactor::One, wgpu::BlendFactor::Zero }; }
 	template <> wgpu::ColorTargetState             defaultDescriptor() { return { NULL, wgpu::TextureFormat::RGBA8Unorm, NULL, wgpu::ColorWriteMask::All }; }
 	template <> wgpu::StencilFaceState			   defaultDescriptor() { return { wgpu::CompareFunction::Always, wgpu::StencilOperation::Keep, wgpu::StencilOperation::Keep, wgpu::StencilOperation::Keep }; }
-	template <> wgpu::VertexState				   defaultDescriptor() { return { NULL, {}, "main", 0, NULL }; }
-	template <> wgpu::FragmentState				   defaultDescriptor() { return { NULL, {}, "main", 0, NULL }; }
-	template <> wgpu::VertexBufferLayout		   defaultDescriptor() { return { 0, wgpu::InputStepMode::Vertex, 0, NULL }; }
-	template <> wgpu::VertexAttribute			   defaultDescriptor() { return { wgpu::VertexFormat::Float, 0, 0 }; }
+	template <> wgpu::VertexState				   defaultDescriptor() { return { NULL, {}, "main", 0, NULL, 0, NULL }; }
+	template <> wgpu::FragmentState				   defaultDescriptor() { return { NULL, {}, "main", 0, NULL, 0, NULL }; }
+	template <> wgpu::VertexBufferLayout		   defaultDescriptor() { return { 0, wgpu::VertexStepMode::Vertex, 0, NULL }; }
+	template <> wgpu::VertexAttribute			   defaultDescriptor() { return { wgpu::VertexFormat::Float32, 0, 0 }; }
 	template <> wgpu::PrimitiveState			   defaultDescriptor() { return { NULL, wgpu::PrimitiveTopology::TriangleList, wgpu::IndexFormat::Undefined, wgpu::FrontFace::CCW, wgpu::CullMode::None }; }
 	template <> wgpu::DepthStencilState			   defaultDescriptor() { return { NULL, wgpu::TextureFormat::Depth24PlusStencil8, false, wgpu::CompareFunction::Always, defaultDescriptor<wgpu::StencilFaceState>(), defaultDescriptor<wgpu::StencilFaceState>(), 0xff, 0xff }; }
 	template <> wgpu::PipelineLayoutDescriptor     defaultDescriptor() { return { NULL, "", 0, NULL }; }
 	template <> wgpu::TextureViewDescriptor        defaultDescriptor() { return {}; }
 
-	template <> wgpu::RenderPassColorAttachment defaultDescriptor() { return { {}, {}, wgpu::LoadOp::Clear, wgpu::StoreOp::Store, { 0.0f, 0.0f, 0.0f, 0.0f } }; }
+	template <> wgpu::RenderPassColorAttachment defaultDescriptor() { return { 0, {}, 0, {}, wgpu::LoadOp::Clear, wgpu::StoreOp::Store, { 0.0f, 0.0f, 0.0f, 0.0f } }; }
 	template <> wgpu::RenderPassDepthStencilAttachment defaultDescriptor() { return { {}, wgpu::LoadOp::Clear, wgpu::StoreOp::Store, 1.0f, false, wgpu::LoadOp::Clear, wgpu::StoreOp::Store, 0, false }; }
 
 	RenderPassDescriptor::RenderPassDescriptor()
@@ -115,7 +115,7 @@ namespace bgfx { namespace webgpu
 			targets[i] = defaultDescriptor<wgpu::ColorTargetState>();
 		}
 
-		desc = defaultDescriptor<wgpu::RenderPipelineDescriptor2>();
+		desc = defaultDescriptor<wgpu::RenderPipelineDescriptor>();
 
 		desc.primitive.topology = wgpu::PrimitiveTopology::TriangleList;
 		desc.multisample.count = 1;
@@ -209,17 +209,17 @@ namespace bgfx { namespace webgpu
 		{ wgpu::BlendFactor(0),                  wgpu::BlendFactor(0)                  }, // ignored
 		{ wgpu::BlendFactor::Zero,               wgpu::BlendFactor::Zero               }, // ZERO
 		{ wgpu::BlendFactor::One,                wgpu::BlendFactor::One                }, // ONE
-		{ wgpu::BlendFactor::SrcColor,           wgpu::BlendFactor::SrcAlpha           }, // SRC_COLOR
-		{ wgpu::BlendFactor::OneMinusSrcColor,   wgpu::BlendFactor::OneMinusSrcAlpha   }, // INV_SRC_COLOR
+		{ wgpu::BlendFactor::Src,                wgpu::BlendFactor::SrcAlpha           }, // SRC_COLOR
+		{ wgpu::BlendFactor::OneMinusSrc,        wgpu::BlendFactor::OneMinusSrcAlpha   }, // INV_SRC_COLOR
 		{ wgpu::BlendFactor::SrcAlpha,           wgpu::BlendFactor::SrcAlpha           }, // SRC_ALPHA
 		{ wgpu::BlendFactor::OneMinusSrcAlpha,   wgpu::BlendFactor::OneMinusSrcAlpha   }, // INV_SRC_ALPHA
 		{ wgpu::BlendFactor::DstAlpha,           wgpu::BlendFactor::DstAlpha           }, // DST_ALPHA
 		{ wgpu::BlendFactor::OneMinusDstAlpha,   wgpu::BlendFactor::OneMinusDstAlpha   }, // INV_DST_ALPHA
-		{ wgpu::BlendFactor::DstColor,           wgpu::BlendFactor::DstAlpha           }, // DST_COLOR
-		{ wgpu::BlendFactor::OneMinusDstColor,   wgpu::BlendFactor::OneMinusDstAlpha   }, // INV_DST_COLOR
+		{ wgpu::BlendFactor::Dst,                wgpu::BlendFactor::DstAlpha           }, // DST_COLOR
+		{ wgpu::BlendFactor::OneMinusDst,        wgpu::BlendFactor::OneMinusDstAlpha   }, // INV_DST_COLOR
 		{ wgpu::BlendFactor::SrcAlphaSaturated,  wgpu::BlendFactor::One                }, // SRC_ALPHA_SAT
-		{ wgpu::BlendFactor::BlendColor,         wgpu::BlendFactor::BlendColor         }, // FACTOR
-		{ wgpu::BlendFactor::OneMinusBlendColor, wgpu::BlendFactor::OneMinusBlendColor }, // INV_FACTOR
+		{ wgpu::BlendFactor::Constant,           wgpu::BlendFactor::Constant           }, // FACTOR
+		{ wgpu::BlendFactor::OneMinusConstant,   wgpu::BlendFactor::OneMinusConstant   }, // INV_FACTOR
 	};
 
 	static const wgpu::BlendOperation s_blendEquation[] =
@@ -271,10 +271,10 @@ namespace bgfx { namespace webgpu
 		wgpu::FilterMode::Linear,
 	};
 
-	static const wgpu::FilterMode s_textureFilterMip[] =
+	static const wgpu::MipmapFilterMode s_textureFilterMip[] =
 	{
-		wgpu::FilterMode::Linear,
-		wgpu::FilterMode::Nearest,
+		wgpu::MipmapFilterMode::Linear,
+		wgpu::MipmapFilterMode::Nearest,
 	};
 
 	struct TextureFormatInfo
@@ -923,6 +923,8 @@ namespace bgfx { namespace webgpu
 
 		void readTexture(TextureHandle _handle, void* _data, uint8_t _mip) override
 		{
+			BX_UNUSED(_mip);
+
 			TextureWgpu& texture = m_textures[_handle.idx];
 
 			readback(texture.m_readback, texture, _data);
@@ -935,9 +937,11 @@ namespace bgfx { namespace webgpu
 			uint32_t size = sizeof(uint32_t) + sizeof(TextureCreate);
 			const Memory* mem = alloc(size);
 
+			bx::Error err;
+
 			bx::StaticMemoryBlockWriter writer(mem->data, mem->size);
 			uint32_t magic = BGFX_CHUNK_MAGIC_TEX;
-			bx::write(&writer, magic);
+			bx::write(&writer, magic, &err);
 
 			TextureCreate tc;
 			tc.m_width     = _width;
@@ -948,7 +952,7 @@ namespace bgfx { namespace webgpu
 			tc.m_format    = TextureFormat::Enum(texture.m_requestedFormat);
 			tc.m_cubeMap   = false;
 			tc.m_mem       = NULL;
-			bx::write(&writer, tc);
+			bx::write(&writer, tc, &err);
 
 			texture.destroy();
 			texture.create(_handle, mem, texture.m_flags, 0);
@@ -1305,7 +1309,7 @@ namespace bgfx { namespace webgpu
 		{
 			if (m_computeEncoder)
 			{
-				m_computeEncoder.EndPass();
+				m_computeEncoder.End();
 				m_computeEncoder = NULL;
 			}
 		}
@@ -2043,7 +2047,7 @@ namespace bgfx { namespace webgpu
 					vertex.desc.bufferCount += 1;
 
 					inputBinding->arrayStride = _decl.m_stride;
-					inputBinding->stepMode = wgpu::InputStepMode::Vertex;
+					inputBinding->stepMode = wgpu::VertexStepMode::Vertex;
 					inputBinding->attributes = inputAttrib;
 
 					uint32_t numAttribs = 0;
@@ -2059,7 +2063,7 @@ namespace bgfx { namespace webgpu
 
 							if(0 == _decl.m_attributes[attr])
 							{
-								inputAttrib->format = wgpu::VertexFormat::Float3;
+								inputAttrib->format = wgpu::VertexFormat::Float32x3;
 								inputAttrib->offset = 0;
 							}
 							else
@@ -2098,7 +2102,7 @@ namespace bgfx { namespace webgpu
 
 					for (uint32_t ii = 0; ii < Attrib::Count; ++ii)
 					{
-						Attrib::Enum iiattr = Attrib::Enum(ii);
+						// Attrib::Enum iiattr = Attrib::Enum(ii);
 						uint16_t mask = attrMask[ii];
 						uint16_t attr = (layout.m_attributes[ii] & mask);
 						if (attr == 0)
@@ -2116,7 +2120,7 @@ namespace bgfx { namespace webgpu
 
 				for (uint32_t ii = 0; ii < Attrib::Count; ++ii)
 				{
-					Attrib::Enum iiattr = Attrib::Enum(ii);
+					// Attrib::Enum iiattr = Attrib::Enum(ii);
 					if (0 < unsettedAttr[ii])
 					{
 					  //uint32_t numAttribs = vertexs.buffers[stream].attributeCount;
@@ -2124,7 +2128,7 @@ namespace bgfx { namespace webgpu
 					  //wgpu::VertexBufferLayout* inputAttrib = const_cast<VkVertexInputAttributeDescription*>(_vertexInputState.pVertexAttributeDescriptions + numAttribs);
 						inputAttrib->shaderLocation = program.m_vsh->m_attrRemap[ii];
 					  //inputAttrib->binding = 0;
-						inputAttrib->format = wgpu::VertexFormat::Float3; // VK_FORMAT_R32G32B32_SFLOAT;
+						inputAttrib->format = wgpu::VertexFormat::Float32x3; // VK_FORMAT_R32G32B32_SFLOAT;
 						inputAttrib->offset = 0;
 						vertex.buffers[stream-1].attributeCount++;
 						++inputAttrib;
@@ -2142,7 +2146,7 @@ namespace bgfx { namespace webgpu
 					uint32_t numAttribs = firstAttrib;
 
 					inputBinding->arrayStride = _numInstanceData * 16;
-					inputBinding->stepMode = wgpu::InputStepMode::Instance;
+					inputBinding->stepMode = wgpu::VertexStepMode::Instance;
 
 					for (uint32_t inst = 0; inst < _numInstanceData; ++inst)
 					{
@@ -2169,7 +2173,7 @@ namespace bgfx { namespace webgpu
 				pd.desc.vertex = vertex.desc;
 
 				BX_TRACE("Creating WebGPU render pipeline state for program %s", program.m_vsh->name());
-				pso->m_rps = m_device.CreateRenderPipeline2(&pd.desc);
+				pso->m_rps = m_device.CreateRenderPipeline(&pd.desc);
 
 				m_pipelineStateCache.add(hash, pso);
 			}
@@ -2220,7 +2224,7 @@ namespace bgfx { namespace webgpu
 
 				wgpu::ComputePipelineDescriptor desc;
 				desc.layout = pso->m_layout;
-				desc.computeStage = { NULL, program.m_vsh->m_module, "main" };
+				desc.compute = { NULL, program.m_vsh->m_module, "main", 0, NULL };
 
 				BX_TRACE("Creating WebGPU render pipeline state for program %s", program.m_vsh->name());
 				pso->m_cps = m_device.CreateComputePipeline(&desc);
@@ -2247,7 +2251,7 @@ namespace bgfx { namespace webgpu
 				desc.magFilter    = s_textureFilterMinMag[(_flags&BGFX_SAMPLER_MAG_MASK)>>BGFX_SAMPLER_MAG_SHIFT];
 				desc.mipmapFilter = s_textureFilterMip[(_flags&BGFX_SAMPLER_MIP_MASK)>>BGFX_SAMPLER_MIP_SHIFT];
 				desc.lodMinClamp  = 0;
-				desc.lodMaxClamp  = bx::kFloatMax;
+				desc.lodMaxClamp  = bx::LimitsT<float>::max;
 
 				const uint32_t cmpFunc = (_flags&BGFX_SAMPLER_COMPARE_MASK)>>BGFX_SAMPLER_COMPARE_SHIFT;
 				desc.compare = 0 == cmpFunc
@@ -2311,7 +2315,7 @@ namespace bgfx { namespace webgpu
 							const float gg = rgba[1];
 							const float bb = rgba[2];
 							const float aa = rgba[3];
-							color.clearColor = { rr, gg, bb, aa };
+							color.clearValue = { rr, gg, bb, aa };
 						}
 						else
 						{
@@ -2319,7 +2323,7 @@ namespace bgfx { namespace webgpu
 							float gg = clr.m_index[1] * 1.0f / 255.0f;
 							float bb = clr.m_index[2] * 1.0f / 255.0f;
 							float aa = clr.m_index[3] * 1.0f / 255.0f;
-							color.clearColor = { rr, gg, bb, aa };
+							color.clearValue = { rr, gg, bb, aa };
 						}
 
 						color.loadOp = wgpu::LoadOp::Clear;
@@ -2337,7 +2341,7 @@ namespace bgfx { namespace webgpu
 
 				if(depthStencil.view)
 				{
-					depthStencil.clearDepth = clr.m_depth;
+					depthStencil.depthClearValue = clr.m_depth;
 					depthStencil.depthLoadOp = 0 != (BGFX_CLEAR_DEPTH & clr.m_flags)
 						? wgpu::LoadOp::Clear
 						: wgpu::LoadOp::Load
@@ -2347,7 +2351,7 @@ namespace bgfx { namespace webgpu
 						: wgpu::StoreOp::Store
 						;
 
-					depthStencil.clearStencil = clr.m_stencil;
+					depthStencil.stencilClearValue = clr.m_stencil;
 					depthStencil.stencilLoadOp = 0 != (BGFX_CLEAR_STENCIL & clr.m_flags)
 						? wgpu::LoadOp::Clear
 						: wgpu::LoadOp::Load
@@ -2390,13 +2394,13 @@ namespace bgfx { namespace webgpu
 		{
 			if (m_renderEncoder)
 			{
-				m_renderEncoder.EndPass();
+				m_renderEncoder.End();
 				m_renderEncoder = NULL;
 			}
 
 			if (m_computeEncoder)
 			{
-				m_computeEncoder.EndPass();
+				m_computeEncoder.End();
 				m_computeEncoder = NULL;
 			}
 		}
@@ -2474,7 +2478,8 @@ namespace bgfx { namespace webgpu
 
 	void writeString(bx::WriterI* _writer, const char* _str)
 	{
-		bx::write(_writer, _str, (int32_t)bx::strLen(_str) );
+		bx::Error err;
+		bx::write(_writer, _str, (int32_t)bx::strLen(_str), &err );
 	}
 
 	void ShaderWgpu::create(ShaderHandle _handle, const Memory* _mem)
@@ -2490,7 +2495,7 @@ namespace bgfx { namespace webgpu
 		uint32_t magic;
 		bx::read(&reader, magic, &err);
 
-		wgpu::ShaderStage shaderStage;
+		wgpu::ShaderStage shaderStage = wgpu::ShaderStage::None;
 
 		if (isShaderType(magic, 'C'))
 		{
@@ -3165,18 +3170,18 @@ namespace bgfx { namespace webgpu
 			desc.mipLevelCount    = m_numMips;
 			desc.sampleCount      = 1;
 
-			desc.usage = wgpu::TextureUsage::Sampled;
+			desc.usage = wgpu::TextureUsage::TextureBinding;
 			desc.usage |= wgpu::TextureUsage::CopyDst;
 			desc.usage |= wgpu::TextureUsage::CopySrc;
 
 			if (computeWrite)
 			{
-				desc.usage |= wgpu::TextureUsage::Storage;
+				desc.usage |= wgpu::TextureUsage::StorageBinding;
 			}
 
 			if (renderTarget)
 			{
-				desc.usage |= wgpu::TextureUsage::OutputAttachment;
+				desc.usage |= wgpu::TextureUsage::RenderAttachment;
 			}
 
 			m_ptr = s_renderWgpu->m_device.CreateTexture(&desc);
@@ -3669,7 +3674,7 @@ namespace bgfx { namespace webgpu
 		BX_UNUSED(_nwh);
 
 		wgpu::SwapChainDescriptor desc;
-		desc.usage = wgpu::TextureUsage::OutputAttachment;
+		desc.usage = wgpu::TextureUsage::RenderAttachment;
 		desc.width = _width;
 		desc.height = _height;
 
@@ -3737,7 +3742,7 @@ namespace bgfx { namespace webgpu
 		desc.size.depthOrArrayLayers = 1;
 		desc.mipLevelCount = 1;
 		desc.sampleCount = sampleCount;
-		desc.usage = wgpu::TextureUsage::OutputAttachment;
+		desc.usage = wgpu::TextureUsage::RenderAttachment;
 
 		if (m_backBufferDepth)
 		{
@@ -4401,7 +4406,7 @@ namespace bgfx { namespace webgpu
 						uint32_t args = compute.m_startIndirect * BGFX_CONFIG_DRAW_INDIRECT_STRIDE;
 						for (uint32_t ii = 0; ii < numDrawIndirect; ++ii)
 						{
-							m_computeEncoder.DispatchIndirect(
+							m_computeEncoder.DispatchWorkgroupsIndirect(
 								  vb.m_ptr
 								, args
 								);
@@ -4410,7 +4415,7 @@ namespace bgfx { namespace webgpu
 					}
 					else
 					{
-						m_computeEncoder.Dispatch(compute.m_numX, compute.m_numY, compute.m_numZ);
+						m_computeEncoder.DispatchWorkgroups(compute.m_numX, compute.m_numY, compute.m_numZ);
 					}
 
 					continue;
@@ -4523,7 +4528,7 @@ namespace bgfx { namespace webgpu
 					float bb = ((rgba >> 8) & 0xff) / 255.0f;
 					float aa = ((rgba) & 0xff) / 255.0f;
 					wgpu::Color color = { rr, gg, bb, aa };
-					rce.SetBlendColor(&color);
+					rce.SetBlendConstant(&color);
 
 					blendFactor = draw.m_rgba;
 				}
@@ -4856,7 +4861,7 @@ namespace bgfx { namespace webgpu
 		perfStats.numCompute    = statsKeyType[1];
 		perfStats.numBlit       = _render->m_numBlitItems;
 		perfStats.maxGpuLatency = maxGpuLatency;
-		perfStats.gpuFrameNum   = result.m_frameNum;
+		// perfStats.gpuFrameNum   = result.m_frameNum;
 		bx::memCopy(perfStats.numPrims, statsNumPrimsRendered, sizeof(perfStats.numPrims) );
 		perfStats.gpuMemoryMax  = -INT64_MAX;
 		perfStats.gpuMemoryUsed = -INT64_MAX;

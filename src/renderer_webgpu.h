@@ -229,15 +229,15 @@ namespace bgfx { namespace webgpu
 
 		wgpu::VertexState desc;
 
-		wgpu::VertexBufferLayoutDescriptor buffers[kMaxVertexInputs];
-		wgpu::VertexAttributeDescriptor attributes[kMaxVertexAttributes];
+		wgpu::VertexBufferLayout buffers[kMaxVertexInputs];
+		wgpu::VertexAttribute attributes[kMaxVertexAttributes];
 	};
 
 	struct RenderPipelineDescriptor
 	{
 		RenderPipelineDescriptor();
 
-		wgpu::RenderPipelineDescriptor2 desc;
+		wgpu::RenderPipelineDescriptor desc;
 
 		wgpu::FragmentState fragment;
 		wgpu::DepthStencilState depthStencil;
