@@ -16,6 +16,7 @@
 #define BGFX_EMBEDDED_SHADER_METAL(...)
 #define BGFX_EMBEDDED_SHADER_NVN(...)
 #define BGFX_EMBEDDED_SHADER_SPIRV(...)
+#define BGFX_EMBEDDED_SHADER_WGSL(...)
 
 #define BGFX_PLATFORM_SUPPORTS_DXBC (0  \
 	|| BX_PLATFORM_LINUX                \
@@ -58,6 +59,9 @@
 	|| BX_PLATFORM_OSX                  \
 	|| BX_PLATFORM_NX                   \
 	)
+#define BGFX_PLATFORM_SUPPORTS_WGSL (0  \
+	|| BX_PLATFORM_SUPPORTS_SPIRV       \
+	)
 
 ///
 #define BGFX_EMBEDDED_SHADER_CONCATENATE(_x, _y) BGFX_EMBEDDED_SHADER_CONCATENATE_(_x, _y)
@@ -96,6 +100,12 @@
 	{ _renderer, BGFX_EMBEDDED_SHADER_CONCATENATE(_name, _spv), BGFX_EMBEDDED_SHADER_COUNTOF(BGFX_EMBEDDED_SHADER_CONCATENATE(_name, _spv) ) },
 #endif // BGFX_PLATFORM_SUPPORTS_SPIRV
 
+#if BGFX_PLATFORM_SUPPORTS_WGSL
+#	undef  BGFX_EMBEDDED_SHADER_WGSL
+#	define BGFX_EMBEDDED_SHADER_WGSL(_renderer, _name) \
+	{ _renderer, BGFX_EMBEDDED_SHADER_CONCATENATE(_name, _wgsl), BGFX_EMBEDDED_SHADER_COUNTOF(BGFX_EMBEDDED_SHADER_CONCATENATE(_name, _wgsl) ) },
+#endif // BGFX_PLATFORM_SUPPORTS_WGSL
+
 #if BGFX_PLATFORM_SUPPORTS_METAL
 #	undef  BGFX_EMBEDDED_SHADER_METAL
 #	define BGFX_EMBEDDED_SHADER_METAL(_renderer, _name) \
@@ -115,7 +125,7 @@
 			BGFX_EMBEDDED_SHADER_ESSL (bgfx::RendererType::OpenGLES,   _name)              \
 			BGFX_EMBEDDED_SHADER_GLSL (bgfx::RendererType::OpenGL,     _name)              \
 			BGFX_EMBEDDED_SHADER_SPIRV(bgfx::RendererType::Vulkan,     _name)              \
-			BGFX_EMBEDDED_SHADER_SPIRV(bgfx::RendererType::WebGPU,     _name)              \
+			BGFX_EMBEDDED_SHADER_WGSL (bgfx::RendererType::WebGPU,     _name)              \
 			{ bgfx::RendererType::Noop,  (const uint8_t*)"VSH\x5\x0\x0\x0\x0\x0\x0", 10 }, \
 			{ bgfx::RendererType::Count, NULL, 0 }                                         \
 		}                                                                                  \
