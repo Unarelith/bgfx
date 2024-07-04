@@ -155,7 +155,7 @@ namespace bgfx { namespace webgpu
 		wgpu::ShaderStage m_stage;
 		wgpu::ShaderModule m_module;
 
-		uint32_t* m_code = NULL;
+		char* m_code = NULL;
 		size_t m_codeSize = 0;
 
 		UniformBuffer* m_constantBuffer = NULL;

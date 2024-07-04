@@ -65,7 +65,7 @@ namespace bgfx { namespace webgpu
 	template <> wgpu::PipelineLayoutDescriptor     defaultDescriptor() { return { NULL, "", 0, NULL }; }
 	template <> wgpu::TextureViewDescriptor        defaultDescriptor() { return {}; }
 
-	template <> wgpu::RenderPassColorAttachment defaultDescriptor() { return { 0, {}, 0, {}, wgpu::LoadOp::Clear, wgpu::StoreOp::Store, { 0.0f, 0.0f, 0.0f, 0.0f } }; }
+	template <> wgpu::RenderPassColorAttachment defaultDescriptor() { return { 0, {}, WGPU_DEPTH_SLICE_UNDEFINED, {}, wgpu::LoadOp::Clear, wgpu::StoreOp::Store, { 0.0f, 0.0f, 0.0f, 0.0f } }; }
 	template <> wgpu::RenderPassDepthStencilAttachment defaultDescriptor() { return { {}, wgpu::LoadOp::Clear, wgpu::StoreOp::Store, 1.0f, false, wgpu::LoadOp::Clear, wgpu::StoreOp::Store, 0, false }; }
 
 	RenderPassDescriptor::RenderPassDescriptor()
@@ -2719,10 +2719,11 @@ namespace bgfx { namespace webgpu
 
 		BX_TRACE("Shader body is at %lld size %u remaining %lld", reader.getPos(), shaderSize, reader.remaining());
 
-		const uint32_t* code = (const uint32_t*)reader.getDataPtr();
+		const char* code = (const char*)reader.getDataPtr();
 		bx::skip(&reader, shaderSize+1);
 
-		m_code = (uint32_t*)bx::alloc(g_allocator, shaderSize);
+		m_code = (char *)bx::alloc(g_allocator, shaderSize + 1);
+		bx::memSet(m_code, 0, shaderSize + 1);
 		m_codeSize = shaderSize;
 
 		bx::memCopy(m_code, code, shaderSize);
@@ -2776,13 +2777,13 @@ namespace bgfx { namespace webgpu
 			}
 		}
 
-		wgpu::ShaderModuleSPIRVDescriptor spirv;
-		spirv.code = m_code;
-		spirv.codeSize = shaderSize / 4;
+		wgpu::ShaderModuleWGSLDescriptor wgsl;
+		wgsl.code = m_code;
+
 
 		wgpu::ShaderModuleDescriptor desc;
 		desc.label = getName(_handle);
-		desc.nextInChain = &spirv;
+		desc.nextInChain = &wgsl;
 
 		m_module = s_renderWgpu->m_device.CreateShaderModule(&desc);
 
