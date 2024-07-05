@@ -3362,7 +3362,7 @@ namespace bgfx { namespace webgpu
 				imageCopyBuffer[ii].buffer              = stagingBuffer;
 				imageCopyBuffer[ii].layout.offset       = offset;
 				imageCopyBuffer[ii].layout.bytesPerRow  = dstpitch; // assume that image data are tightly aligned
-				imageCopyBuffer[ii].layout.rowsPerImage = 0; // assume that image data are tightly aligned
+				// imageCopyBuffer[ii].layout.rowsPerImage = 0; // assume that image data are tightly aligned
 				imageCopyTexture[ii].texture            = m_ptr;
 				imageCopyTexture[ii].mipLevel       = imageInfos[ii].mipLevel;
 				imageCopyTexture[ii].origin         = { 0, 0, imageInfos[ii].layer };
@@ -3461,7 +3461,7 @@ namespace bgfx { namespace webgpu
 		wgpu::ImageCopyBuffer srcView;
 		srcView.buffer = staging;
 		srcView.layout.bytesPerRow = dstpitch;
-		srcView.layout.rowsPerImage = 0;
+		// srcView.layout.rowsPerImage = 0;
 
 		wgpu::ImageCopyTexture destView;
 		destView.texture = m_ptr;
