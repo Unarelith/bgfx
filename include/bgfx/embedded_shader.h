@@ -60,7 +60,11 @@
 	|| BX_PLATFORM_NX                   \
 	)
 #define BGFX_PLATFORM_SUPPORTS_WGSL (0  \
-	|| BX_PLATFORM_SUPPORTS_SPIRV       \
+	|| BX_PLATFORM_ANDROID              \
+	|| BX_PLATFORM_EMSCRIPTEN           \
+	|| BX_PLATFORM_LINUX                \
+	|| BX_PLATFORM_WINDOWS              \
+	|| BX_PLATFORM_OSX                  \
 	)
 
 ///
