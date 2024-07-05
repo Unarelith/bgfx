@@ -6,6 +6,7 @@
 #include "shaderc.h"
 
 #include <iostream> // std::cout
+#include <fstream> // std::ofstream
 
 BX_PRAGMA_DIAGNOSTIC_PUSH()
 BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4100) // error C4100: 'inclusionDepth' : unreferenced formal parameter
@@ -447,7 +448,7 @@ namespace bgfx { namespace spirv
 	/// The value is 100.
 	constexpr int s_GLSL_VULKAN_CLIENT_VERSION = 100;
 
-	static bool compile(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _shaderWriter, bx::WriterI* _messageWriter, bool _firstPass)
+	static bool compile(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _shaderWriter, bx::WriterI* _messageWriter, bool _firstPass, bool convertToWGSL)
 	{
 		BX_UNUSED(_version);
 
@@ -652,7 +653,7 @@ namespace bgfx { namespace spirv
 					// recompile with the unused uniforms converted to statics
 					delete program;
 					delete shader;
-					return compile(_options, _version, output.c_str(), _shaderWriter, _messageWriter, false);
+					return compile(_options, _version, output.c_str(), _shaderWriter, _messageWriter, false, convertToWGSL);
 				}
 
 				UniformArray uniforms;
@@ -711,6 +712,9 @@ namespace bgfx { namespace spirv
 				glslang::TIntermediate* intermediate = program->getIntermediate(stage);
 				std::vector<uint32_t> spirv;
 
+				// const std::string &s = intermediate->getSourceText();
+				// bx::write(_messageWriter, &messageErr, "%s\n", s.c_str());
+
 				glslang::SpvOptions options;
 				options.disableOptimizer = _options.debugInformation;
 				options.generateDebugInfo = _options.debugInformation;
@@ -750,9 +754,12 @@ namespace bgfx { namespace spirv
 				}
 				else
 				{
+					std::stringstream disasm;
+					glslang::SpirvToolsDisassemble(disasm, spirv, getSpirvTargetVersion(_version, _messageWriter));
+
 					if (g_verbose)
 					{
-						glslang::SpirvToolsDisassemble(std::cout, spirv, getSpirvTargetVersion(_version, _messageWriter));
+						std::cout << disasm.str();
 					}
 
 					spirv_cross::CompilerReflection refl(spirv);
@@ -857,6 +864,48 @@ namespace bgfx { namespace spirv
 
 					uint16_t size = writeUniformArray(_shaderWriter, uniforms, _options.shaderType == 'f');
 
+					if (convertToWGSL)
+					{
+						std::string disasmStr = disasm.str();
+						size_t rowMajor;
+						while ((rowMajor = disasmStr.find("RowMajor")) != std::string::npos)
+							disasmStr.replace(rowMajor, 3, "Col");
+
+						std::ofstream tmp("tmp.spvasm");
+						assert(tmp.is_open());
+						tmp.write(disasmStr.c_str(), disasmStr.length());
+						tmp.close();
+
+#ifdef _WIN32
+						system("D:\\Dev\\Projects\\bgfx.cmake\\dawn\\cmake-build\\Debug\\tint.exe tmp.spvasm -f wgsl -o tmp.wgsl");
+#else
+						system("/mnt/d/Dev/Projects/bgfx.cmake/dawn/cmake-build-linux/tint tmp.spvasm -f wgsl -o tmp.wgsl");
+#endif
+
+						std::ifstream file("tmp.wgsl");
+						assert(file.is_open());
+						file.seekg(0, std::ios::end);
+						std::streampos fileSize = file.tellg();
+						file.seekg(0, std::ios::beg);
+						size_t numElements = fileSize / sizeof(uint32_t);
+						spirv.clear();
+						spirv.resize(numElements);
+						file.read(reinterpret_cast<char *>(spirv.data()), fileSize);
+						file.close();
+
+#ifdef _WIN32
+						system("del tmp.spvasm");
+						system("del tmp.wgsl");
+#else
+						system("rm tmp.spvasm");
+						system("rm tmp.wgsl");
+#endif
+
+						// std::cout << "fileSize: " << fileSize << std::endl;
+						// std::cout.write((const char *)spirv.data(), fileSize);
+						// std::cout << std::endl;
+					}
+
 					uint32_t shaderSize = (uint32_t)spirv.size() * sizeof(uint32_t);
 					bx::write(_shaderWriter, shaderSize, &err);
 					bx::write(_shaderWriter, spirv.data(), shaderSize, &err);
@@ -896,7 +945,12 @@ namespace bgfx { namespace spirv
 
 	bool compileSPIRVShader(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _shaderWriter, bx::WriterI* _messageWriter)
 	{
-		return spirv::compile(_options, _version, _code, _shaderWriter, _messageWriter, true);
+		return spirv::compile(_options, _version, _code, _shaderWriter, _messageWriter, true, false);
+	}
+
+	bool compileWGSLShader(const Options& _options, uint32_t _version, const std::string& _code, bx::WriterI* _shaderWriter, bx::WriterI* _messageWriter)
+	{
+		return spirv::compile(_options, _version, _code, _shaderWriter, _messageWriter, true, true);
 	}
 
 } // namespace bgfx

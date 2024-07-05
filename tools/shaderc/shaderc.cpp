@@ -35,6 +35,7 @@ namespace bgfx
 			Metal,
 			PSSL,
 			SpirV,
+			WGSL,
 
 			Count
 		};
@@ -48,6 +49,7 @@ namespace bgfx
 		"Metal Shading Language (MSL)",
 		"PlayStation Shader Language (PSSL)",
 		"Standard Portable Intermediate Representation - V (SPIR-V)",
+		"WebGPU Shading Language (WGSL)",
 
 		"Unknown?!"
 	};
@@ -139,6 +141,7 @@ namespace bgfx
 		{  ShadingLang::SpirV, 1411,   "spirv14-11" },
 		{  ShadingLang::SpirV, 1512,   "spirv15-12" },
 		{  ShadingLang::SpirV, 1613,   "spirv16-13" },
+		{  ShadingLang::WGSL,  1010,   "wgsl"       },
 		{  ShadingLang::GLSL,  120,    "120"        },
 		{  ShadingLang::GLSL,  130,    "130"        },
 		{  ShadingLang::GLSL,  140,    "140"        },
@@ -1203,9 +1206,11 @@ namespace bgfx
 		if (0 == bx::strCmpI(platform, "android") )
 		{
 			preprocessor.setDefine("BX_PLATFORM_ANDROID=1");
-			if (profile->lang == ShadingLang::SpirV)
+			if (profile->lang == ShadingLang::SpirV || profile->lang == ShadingLang::WGSL)
 			{
 				preprocessor.setDefine("BGFX_SHADER_LANGUAGE_SPIRV=1");
+				if (profile->lang == ShadingLang::WGSL)
+					preprocessor.setDefine("BGFX_SHADER_LANGUAGE_WGSL=1");
 			}
 			else
 			{
@@ -1220,9 +1225,11 @@ namespace bgfx
 		else if (0 == bx::strCmpI(platform, "linux") )
 		{
 			preprocessor.setDefine("BX_PLATFORM_LINUX=1");
-			if (profile->lang == ShadingLang::SpirV)
+			if (profile->lang == ShadingLang::SpirV || profile->lang == ShadingLang::WGSL)
 			{
 				preprocessor.setDefine("BGFX_SHADER_LANGUAGE_SPIRV=1");
+				if (profile->lang == ShadingLang::WGSL)
+					preprocessor.setDefine("BGFX_SHADER_LANGUAGE_WGSL=1");
 			}
 			else
 			{
@@ -1272,9 +1279,11 @@ namespace bgfx
 			{
 				preprocessor.setDefine(glslDefine);
 			}
-			else if (profile->lang == ShadingLang::SpirV)
+			else if (profile->lang == ShadingLang::SpirV || profile->lang == ShadingLang::WGSL)
 			{
 				preprocessor.setDefine("BGFX_SHADER_LANGUAGE_SPIRV=1");
+				if (profile->lang == ShadingLang::WGSL)
+					preprocessor.setDefine("BGFX_SHADER_LANGUAGE_WGSL=1");
 			}
 		}
 		else if (0 == bx::strCmpI(platform, "orbis") )
@@ -1294,9 +1303,11 @@ namespace bgfx
 			{
 				preprocessor.setDefine(glslDefine);
 			}
-			else if (profile->lang == ShadingLang::SpirV)
+			else if (profile->lang == ShadingLang::SpirV || profile->lang == ShadingLang::WGSL)
 			{
 				preprocessor.setDefine("BGFX_SHADER_LANGUAGE_SPIRV=1");
+				if (profile->lang == ShadingLang::WGSL)
+					preprocessor.setDefine("BGFX_SHADER_LANGUAGE_WGSL=1");
 			}
 		}
 
@@ -1559,6 +1570,10 @@ namespace bgfx
 			{
 				compiled = compileSPIRVShader(_options, profile->id, input, _shaderWriter, _messageWriter);
 			}
+			else if (profile->lang == ShadingLang::WGSL)
+			{
+				compiled = compileWGSLShader(_options, profile->id, input, _shaderWriter, _messageWriter);
+			}
 			else if (profile->lang == ShadingLang::PSSL)
 			{
 				compiled = compilePSSLShader(_options, 0, input, _shaderWriter, _messageWriter);
@@ -1715,6 +1730,10 @@ namespace bgfx
 							else if (profile->lang == ShadingLang::SpirV)
 							{
 								compiled = compileSPIRVShader(_options, profile->id, code, _shaderWriter, _messageWriter);
+							}
+							else if (profile->lang == ShadingLang::WGSL)
+							{
+								compiled = compileWGSLShader(_options, profile->id, code, _shaderWriter, _messageWriter);
 							}
 							else if (profile->lang == ShadingLang::PSSL)
 							{
@@ -2612,6 +2631,10 @@ namespace bgfx
 							else if (profile->lang == ShadingLang::SpirV)
 							{
 								compiled = compileSPIRVShader(_options, profile->id, code, _shaderWriter, _messageWriter);
+							}
+							else if (profile->lang == ShadingLang::WGSL)
+							{
+								compiled = compileWGSLShader(_options, profile->id, code, _shaderWriter, _messageWriter);
 							}
 							else if (profile->lang == ShadingLang::PSSL)
 							{
