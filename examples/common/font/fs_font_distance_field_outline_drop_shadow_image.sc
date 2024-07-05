@@ -13,17 +13,31 @@ uniform vec4 u_params;
 
 void main()
 {
+	vec4 texcoord = v_texcoord0;
 	if (!any(equal(v_texcoord1.xyz, vec3(0.0, 0.0, 0.0))))
 	{
-		vec4 imageColor = textureCube(s_texColor, v_texcoord1.xyz);
+		texcoord = v_texcoord1;
+	}
+
+	if (!any(equal(v_texcoord2.xyz, vec3(0.0, 0.0, 0.0))))
+	{
+		texcoord = v_texcoord2;
+	}
+
+	vec4 color = textureCube(s_texColor, texcoord.xyz);
+	float lfw = length(fwidth(texcoord.xyz));
+
+	if (!any(equal(v_texcoord1.xyz, vec3(0.0, 0.0, 0.0))))
+	{
+		vec4 imageColor = color;
 		gl_FragColor = vec4(imageColor.xyz, imageColor.w * v_color0.w);
 		return;
 	}
 
 	if (!any(equal(v_texcoord2.xyz, vec3(0.0, 0.0, 0.0))))
 	{
-		vec4 shadowTexCoord = v_texcoord2;
-		vec4 shadowDistanceColor = textureCube(s_texColor, shadowTexCoord.xyz);
+		vec4 shadowTexCoord = texcoord;
+		vec4 shadowDistanceColor = color;
 		int index2 = int(shadowTexCoord.w*4.0 + 0.5);
 		float rgba2[4];
 		rgba2[0] = shadowDistanceColor.z;
@@ -32,7 +46,7 @@ void main()
 		rgba2[3] = shadowDistanceColor.w;
 		float shadowDistance = rgba2[index2];
 
-		float shadowSmoothing = 16.0 * length(fwidth(shadowTexCoord.xyz)) / sqrt(2.0) * u_distanceMultiplier;
+		float shadowSmoothing = 16.0 * lfw / sqrt(2.0) * u_distanceMultiplier;
 
 		float outlineWidth = u_outlineWidth * shadowSmoothing;
 		float outerEdgeCenter = 0.5 - outlineWidth;
@@ -44,8 +58,6 @@ void main()
 		return;
 	}
 
-	vec4 color = textureCube(s_texColor, v_texcoord0.xyz);
-
 	int index = int(v_texcoord0.w*4.0 + 0.5);
 	float rgba[4];
 	rgba[0] = color.z;
@@ -54,7 +66,7 @@ void main()
 	rgba[3] = color.w;
 	float distance = rgba[index];
 
-	float smoothing = 16.0 * length(fwidth(v_texcoord0.xyz)) / sqrt(2.0) * u_distanceMultiplier;
+	float smoothing = 16.0 * lfw / sqrt(2.0) * u_distanceMultiplier;
 
 	float outlineWidth = u_outlineWidth * smoothing;
 	float outerEdgeCenter = 0.5 - outlineWidth;
