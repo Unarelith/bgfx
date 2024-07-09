@@ -22,6 +22,7 @@ all:
 	@echo "  TARGET=5 (metal)"
 	@echo "  TARGET=6 (pssl)"
 	@echo "  TARGET=7 (spirv)"
+	@echo "  TARGET=8 (wgsl)"
 
 .PHONY: build
 build:
@@ -33,6 +34,7 @@ endif
 	@make -s --no-print-directory TARGET=4 all
 	@make -s --no-print-directory TARGET=5 all
 	@make -s --no-print-directory TARGET=7 all
+	@make -s --no-print-directory TARGET=8 all
 
 .PHONY: clean
 clean:
@@ -44,6 +46,7 @@ endif
 	@make -s --no-print-directory TARGET=4 clean
 	@make -s --no-print-directory TARGET=5 clean
 	@make -s --no-print-directory TARGET=7 clean
+	@make -s --no-print-directory TARGET=8 clean
 
 .PHONY: rebuild
 rebuild: clean build
@@ -87,6 +90,13 @@ VS_FLAGS=--platform linux -p spirv
 FS_FLAGS=--platform linux -p spirv
 CS_FLAGS=--platform linux -p spirv
 SHADER_PATH=shaders/spirv
+else
+ifeq ($(TARGET), 8)
+VS_FLAGS=--platform linux -p wgsl
+FS_FLAGS=--platform linux -p wgsl
+CS_FLAGS=--platform linux -p wgsl
+SHADER_PATH=shaders/wgsl
+endif
 endif
 endif
 endif
