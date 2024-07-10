@@ -1737,6 +1737,7 @@ namespace bgfx { namespace webgpu
 				_renderPassDescriptor.depthStencilAttachment = defaultDescriptor<wgpu::RenderPassDepthStencilAttachment>();
 				_renderPassDescriptor.depthStencilAttachment.view = swapChain->m_backBufferDepth.CreateView();
 				_renderPassDescriptor.desc.depthStencilAttachment = &_renderPassDescriptor.depthStencilAttachment;
+				_renderPassDescriptor.hasStencil = swapChain->m_depthFormat == wgpu::TextureFormat::Depth24PlusStencil8;
 			}
 			else
 			{
@@ -1773,6 +1774,8 @@ namespace bgfx { namespace webgpu
 						;
 
 					_renderPassDescriptor.desc.depthStencilAttachment = &_renderPassDescriptor.depthStencilAttachment;
+
+					_renderPassDescriptor.hasStencil = texture.m_textureFormat == bgfx::TextureFormat::D24S8;
 				}
 			}
 
@@ -2366,14 +2369,23 @@ namespace bgfx { namespace webgpu
 						;
 
 					depthStencil.stencilClearValue = clr.m_stencil;
-					depthStencil.stencilLoadOp = 0 != (BGFX_CLEAR_STENCIL & clr.m_flags)
-						? wgpu::LoadOp::Clear
-						: wgpu::LoadOp::Load
-						;
-					depthStencil.stencilStoreOp = m_mainFrameBuffer.m_swapChain->m_backBufferColorMsaa
-						? wgpu::StoreOp(0) //wgpu::StoreOp::DontCare
-						: wgpu::StoreOp::Store
-						;
+
+					if (renderPassDescriptor.hasStencil)
+					{
+						depthStencil.stencilLoadOp = 0 != (BGFX_CLEAR_STENCIL & clr.m_flags)
+							? wgpu::LoadOp::Clear
+							: wgpu::LoadOp::Load
+							;
+						depthStencil.stencilStoreOp = m_mainFrameBuffer.m_swapChain->m_backBufferColorMsaa
+							? wgpu::StoreOp(0) //wgpu::StoreOp::DontCare
+							: wgpu::StoreOp::Store
+							;
+					}
+					else
+					{
+						depthStencil.stencilLoadOp = wgpu::LoadOp(0);
+						depthStencil.stencilStoreOp = wgpu::StoreOp(0);
+					}
 				}
 			}
 			else
@@ -2394,8 +2406,16 @@ namespace bgfx { namespace webgpu
 					depthStencil.depthLoadOp = wgpu::LoadOp::Load;
 					depthStencil.depthStoreOp = wgpu::StoreOp::Store;
 
-					depthStencil.stencilLoadOp = wgpu::LoadOp::Load;
-					depthStencil.stencilStoreOp = wgpu::StoreOp::Store;
+	  				if (renderPassDescriptor.hasStencil)
+					{
+						depthStencil.stencilLoadOp = wgpu::LoadOp::Load;
+						depthStencil.stencilStoreOp = wgpu::StoreOp::Store;
+					}
+					else
+					{
+						depthStencil.stencilLoadOp = wgpu::LoadOp(0);
+						depthStencil.stencilStoreOp = wgpu::StoreOp(0);
+					}
 				}
 			}
 
