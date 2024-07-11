@@ -196,12 +196,25 @@ void VectorDisplay::endFrame()
 
 			bgfx::setVertexBuffer(0, m_vertexBuffers[i], 0, m_vertexBuffersSize[i]); // explicitly feed vertex number!
 
-			bgfx::setState(0
-				| BGFX_STATE_WRITE_RGB
-				| BGFX_STATE_WRITE_A
-				| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_DST_ALPHA)
-				| BGFX_STATE_BLEND_EQUATION_SEPARATE(BGFX_STATE_BLEND_EQUATION_ADD, BGFX_STATE_BLEND_EQUATION_MAX)
-				);
+			if (bgfx::getRendererType() != bgfx::RendererType::WebGPU)
+			{
+				bgfx::setState(0
+					| BGFX_STATE_WRITE_RGB
+					| BGFX_STATE_WRITE_A
+					| BGFX_STATE_BLEND_FUNC(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_DST_ALPHA)
+					| BGFX_STATE_BLEND_EQUATION_SEPARATE(BGFX_STATE_BLEND_EQUATION_ADD, BGFX_STATE_BLEND_EQUATION_MAX)
+					);
+			}
+			else
+			{
+				// WebGPU doesn't support using anything else than BLEND_STATE_ONE with BLEND_STATE_EQUATION_MAX
+				bgfx::setState(0
+					| BGFX_STATE_WRITE_RGB
+					| BGFX_STATE_WRITE_A
+					| BGFX_STATE_BLEND_FUNC_SEPARATE(BGFX_STATE_BLEND_SRC_ALPHA, BGFX_STATE_BLEND_DST_ALPHA, BGFX_STATE_BLEND_ONE, BGFX_STATE_BLEND_ONE)
+					| BGFX_STATE_BLEND_EQUATION_SEPARATE(BGFX_STATE_BLEND_EQUATION_ADD, BGFX_STATE_BLEND_EQUATION_MAX)
+					);
+			}
 
 			bgfx::setViewName(m_view, "RenderVectorDisplay");
 			bgfx::submit(m_view, m_drawToScreenShader);
