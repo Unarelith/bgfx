@@ -1,5 +1,7 @@
 navigator.gpu.requestAdapter().then((adapter) => {
-    adapter.requestDevice().then((device) => {
+    adapter.requestDevice({
+        requiredFeatures: ["float32-filterable"]
+    }).then((device) => {
         Module.preinitializedWebGPUDevice = device;
     });
 });
