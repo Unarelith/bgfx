@@ -553,7 +553,10 @@ namespace bgfx { namespace spirv
 			}
 			else
 			{
-				program->buildReflection();
+				if (!convertToWGSL)
+					program->buildReflection();
+				else
+					program->buildReflection(EShReflectionAllBlockVariables);
 
 				if (_firstPass)
 				{
