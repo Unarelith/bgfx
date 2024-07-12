@@ -13,21 +13,14 @@ uniform vec4 u_params;
 
 void main()
 {
-	vec4 texcoord = v_texcoord0;
 	if (any(equal(v_texcoord0.xyz, vec3(0.0, 0.0, 0.0))))
 	{
-		texcoord = v_texcoord1;
-	}
-
-	vec4 color = textureCube(s_texColor, texcoord.xyz);
-	float lfw = length(fwidth(texcoord.xyz));
-
-	if (any(equal(v_texcoord0.xyz, vec3(0.0, 0.0, 0.0))))
-	{
-		vec4 imageColor = color;
+		vec4 imageColor = textureCube(s_texColor, v_texcoord1.xyz);
 		gl_FragColor = vec4(imageColor.xyz, imageColor.w * v_color0.w);
 		return;
 	}
+
+	vec4 color = textureCube(s_texColor, v_texcoord0.xyz);
 
 	int index = int(v_texcoord0.w*4.0 + 0.5);
 	float rgba[4];
@@ -37,7 +30,7 @@ void main()
 	rgba[3] = color.w;
 	float distance = rgba[index];
 
-	float smoothing = 16.0 * lfw / sqrt(2.0) * u_distanceMultiplier;
+	float smoothing = 16.0 * length(fwidth(v_texcoord0.xyz)) / sqrt(2.0) * u_distanceMultiplier;
 
 	float outlineWidth = u_outlineWidth * smoothing;
 	float outerEdgeCenter = 0.5 - outlineWidth;
