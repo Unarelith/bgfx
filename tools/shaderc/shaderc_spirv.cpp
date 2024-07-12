@@ -880,9 +880,9 @@ namespace bgfx { namespace spirv
 						tmp.close();
 
 #ifdef _WIN32
-						system("D:\\Dev\\Projects\\bgfx.cmake\\dawn\\cmake-build\\Debug\\tint.exe tmp.spvasm -f wgsl -o tmp.wgsl");
+						system("D:\\Dev\\Projects\\bgfx.cmake\\dawn\\cmake-build\\Debug\\tint.exe --allow-non-uniform-derivatives tmp.spvasm -f wgsl -o tmp.wgsl");
 #else
-						system("/mnt/d/Dev/Projects/bgfx.cmake/dawn/cmake-build-linux/tint tmp.spvasm -f wgsl -o tmp.wgsl");
+						system("/mnt/d/Dev/Projects/bgfx.cmake/dawn/cmake-build-linux/tint --allow-non-uniform-derivatives tmp.spvasm -f wgsl -o tmp.wgsl");
 #endif
 
 						std::ifstream file("tmp.wgsl");
