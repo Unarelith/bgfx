@@ -1143,7 +1143,7 @@ public:
 	{
 		Args args(_argc, _argv);
 
-		m_debug = BGFX_DEBUG_NONE;
+		m_debug = BGFX_DEBUG_TEXT;
 		m_reset = BGFX_RESET_VSYNC;
 
 		m_width  = _width;
@@ -1722,21 +1722,24 @@ public:
 
 		ShadowMapSettings* currentSmSettings = &m_smSettings[m_settings.m_lightType][m_settings.m_depthImpl][m_settings.m_smImpl];
 
-		// Render targets.
-		uint16_t shadowMapSize = 1 << uint32_t(currentSmSettings->m_sizePwrTwo);
-		m_currentShadowMapSize = shadowMapSize;
-		float currentShadowMapSizef = float(int16_t(m_currentShadowMapSize) );
-		s_uniforms.m_shadowMapTexelSize = 1.0f / currentShadowMapSizef;
-		for (uint8_t ii = 0; ii < ShadowMapRenderTargets::Count; ++ii)
+		if (BGFX_CAPS_FORMAT_TEXTURE_NONE != bgfx::getCaps()->formats[bgfx::TextureFormat::D32F])
 		{
-			bgfx::TextureHandle fbtextures[] =
+			// Render targets.
+			uint16_t shadowMapSize = 1 << uint32_t(currentSmSettings->m_sizePwrTwo);
+			m_currentShadowMapSize = shadowMapSize;
+			float currentShadowMapSizef = float(int16_t(m_currentShadowMapSize) );
+			s_uniforms.m_shadowMapTexelSize = 1.0f / currentShadowMapSizef;
+			for (uint8_t ii = 0; ii < ShadowMapRenderTargets::Count; ++ii)
 			{
-				bgfx::createTexture2D(m_currentShadowMapSize, m_currentShadowMapSize, false, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_RT),
-				bgfx::createTexture2D(m_currentShadowMapSize, m_currentShadowMapSize, false, 1, bgfx::TextureFormat::D32F,  BGFX_TEXTURE_RT),
-			};
-			s_rtShadowMap[ii] = bgfx::createFrameBuffer(BX_COUNTOF(fbtextures), fbtextures, true);
+				bgfx::TextureHandle fbtextures[] =
+				{
+					bgfx::createTexture2D(m_currentShadowMapSize, m_currentShadowMapSize, false, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_RT),
+					bgfx::createTexture2D(m_currentShadowMapSize, m_currentShadowMapSize, false, 1, bgfx::TextureFormat::D32F,  BGFX_TEXTURE_RT),
+				};
+				s_rtShadowMap[ii] = bgfx::createFrameBuffer(BX_COUNTOF(fbtextures), fbtextures, true);
+			}
+			s_rtBlur = bgfx::createFrameBuffer(m_currentShadowMapSize, m_currentShadowMapSize, bgfx::TextureFormat::BGRA8);
 		}
-		s_rtBlur = bgfx::createFrameBuffer(m_currentShadowMapSize, m_currentShadowMapSize, bgfx::TextureFormat::BGRA8);
 
 		// Setup camera.
 		cameraCreate();
@@ -1792,7 +1795,27 @@ public:
 			m_viewState.m_width  = uint16_t(m_width);
 			m_viewState.m_height = uint16_t(m_height);
 
+			imguiBeginFrame(m_mouseState.m_mx
+							, m_mouseState.m_my
+							, (m_mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT   : 0)
+							| (m_mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT  : 0)
+							| (m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
+							, m_mouseState.m_mz
+							, m_viewState.m_width
+							, m_viewState.m_height
+							);
+
+			showExampleDialog(this);
+
 			const bgfx::Caps* caps = bgfx::getCaps();
+
+			if (BGFX_CAPS_FORMAT_TEXTURE_NONE == caps->formats[bgfx::TextureFormat::D32F])
+			{
+				imguiEndFrame();
+				bgfx::dbgTextPrintf(0, 0, 0x1f, " Texture format D32F is not supported. ");
+				bgfx::frame();
+				return true;
+			}
 
 			// Set view and projection matrices.
 			const float camFovy    = 60.0f;
@@ -1812,18 +1835,6 @@ public:
 			//		s_uniforms.submitConstUniforms();
 
 			// Imgui.
-			imguiBeginFrame(m_mouseState.m_mx
-							, m_mouseState.m_my
-							, (m_mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT   : 0)
-							| (m_mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT  : 0)
-							| (m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
-							, m_mouseState.m_mz
-							, m_viewState.m_width
-							, m_viewState.m_height
-							);
-
-			showExampleDialog(this);
-
 			ImGui::SetNextWindowPos(
 				  ImVec2(m_viewState.m_width - m_viewState.m_width / 5.0f - 10.0f, 10.0f)
 				, ImGuiCond_FirstUseEver
