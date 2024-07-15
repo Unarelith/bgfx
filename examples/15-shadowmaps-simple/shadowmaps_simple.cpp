@@ -72,7 +72,7 @@ public:
 
 		m_width  = _width;
 		m_height = _height;
-		m_debug = BGFX_DEBUG_NONE;
+		m_debug = BGFX_DEBUG_TEXT;
 		m_reset = BGFX_RESET_VSYNC;
 
 		bgfx::Init init;
@@ -249,6 +249,13 @@ public:
 			ImGui::End();
 
 			imguiEndFrame();
+
+			if (BGFX_CAPS_FORMAT_TEXTURE_NONE == bgfx::getCaps()->formats[bgfx::TextureFormat::D16])
+			{
+				bgfx::dbgTextPrintf(0, 0, 0x1f, " Texture format D16 is not supported. ");
+				bgfx::frame();
+				return true;
+			}
 
 			int64_t now = bx::getHPCounter();
 			const double freq = double(bx::getHPFrequency() );
