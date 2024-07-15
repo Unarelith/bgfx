@@ -15,7 +15,11 @@ void cmdDestroyWindow(const void* _userData);
 namespace
 {
 
+#if !BX_PLATFORM_EMSCRIPTEN
 #define MAX_WINDOWS 8
+#else
+#define MAX_WINDOWS 2
+#endif
 
 struct PosColorVertex
 {

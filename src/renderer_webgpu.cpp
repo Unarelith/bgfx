@@ -3724,7 +3724,7 @@ namespace bgfx { namespace webgpu
 		wgpu::Instance instance = wgpu::CreateInstance(nullptr);
 
 		wgpu::SurfaceDescriptorFromCanvasHTMLSelector canvasDesc{};
-		canvasDesc.selector = "#canvas";
+		canvasDesc.selector = (const char *)_nwh;
 
 		wgpu::SurfaceDescriptor surfDesc{};
 		surfDesc.nextInChain = &canvasDesc;

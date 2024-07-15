@@ -30,6 +30,8 @@ namespace entry
 {
 	static uint8_t s_translateKey[256];
 
+	static const char *s_canvasNames[2] = {"#canvas", "#canvas2"};
+
 	struct Context
 	{
 		Context()
@@ -370,10 +372,31 @@ namespace entry
 		s_ctx.m_eventQueue.release(_event);
 	}
 
+	static bool s_isSecondaryWindowOpened = false;
+
 	WindowHandle createWindow(int32_t _x, int32_t _y, uint32_t _width, uint32_t _height, uint32_t _flags, const char* _title)
 	{
-		BX_UNUSED(_x, _y, _width, _height, _flags, _title);
+		BX_UNUSED(_x, _y, _flags, _title);
 		WindowHandle handle = { UINT16_MAX };
+
+		if (!s_isSecondaryWindowOpened)
+		{
+			handle.idx = 1;
+			emscripten_set_canvas_element_size(s_canvasNames[handle.idx], _width, _height);
+
+			BX_TRACE("KF createWindow %d %d", _width, _height);
+
+			s_ctx.m_eventQueue.postWindowEvent(handle, (void *)s_canvasNames[handle.idx]);
+			s_ctx.m_eventQueue.postSizeEvent(handle, _width, _height);
+
+			extern WindowState s_window[ENTRY_CONFIG_MAX_WINDOWS];
+			s_window[handle.idx].m_handle = handle;
+			s_window[handle.idx].m_nwh = (void *)s_canvasNames[handle.idx];
+			s_window[handle.idx].m_width = _width;
+			s_window[handle.idx].m_height = _height;
+
+			s_isSecondaryWindowOpened = true;
+		}
 
 		return handle;
 	}
@@ -381,6 +404,8 @@ namespace entry
 	void destroyWindow(WindowHandle _handle)
 	{
 		BX_UNUSED(_handle);
+
+		s_isSecondaryWindowOpened = false;
 	}
 
 	void setWindowPos(WindowHandle _handle, int32_t _x, int32_t _y)
@@ -390,7 +415,7 @@ namespace entry
 
 	void setWindowSize(WindowHandle _handle, uint32_t _width, uint32_t _height)
 	{
-		BX_UNUSED(_handle, _width, _height);
+		s_ctx.m_eventQueue.postSizeEvent(_handle, _width, _height);
 	}
 
 	void setWindowTitle(WindowHandle _handle, const char* _title)
@@ -417,7 +442,11 @@ namespace entry
 	{
 		if (kDefaultWindowHandle.idx == _handle.idx)
 		{
-			return (void*)"#canvas";
+			return (void*)s_canvasNames[0];
+		}
+		else if (_handle.idx != UINT16_MAX)
+		{
+			return (void*)s_canvasNames[1];
 		}
 
 		return NULL;
