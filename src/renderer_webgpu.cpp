@@ -379,7 +379,7 @@ namespace bgfx { namespace webgpu
 		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // D32
 		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // D16F
 		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // D24F
-		{ wgpu::TextureFormat::Depth32Float,        wgpu::TextureFormat::Undefined        },  // D32F
+		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // D32F
 		{ wgpu::TextureFormat::Stencil8,            wgpu::TextureFormat::Undefined        },  // D0S8
 	};
 	BX_STATIC_ASSERT(TextureFormat::Count == BX_COUNTOF(s_textureFormat));
@@ -645,7 +645,7 @@ namespace bgfx { namespace webgpu
 					: BGFX_CAPS_FORMAT_TEXTURE_NONE
 					;
 
-				if (!bimg::isCompressed(bimg::TextureFormat::Enum(ii) ) )
+				if (!bimg::isCompressed(bimg::TextureFormat::Enum(ii)) && support != 0)
 				{
 					support |= 0
 						| BGFX_CAPS_FORMAT_TEXTURE_FRAMEBUFFER
