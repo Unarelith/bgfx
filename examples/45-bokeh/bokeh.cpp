@@ -236,7 +236,7 @@ public:
 
 		m_width = _width;
 		m_height = _height;
-		m_debug = BGFX_DEBUG_NONE;
+		m_debug = BGFX_DEBUG_TEXT;
 		m_reset = BGFX_RESET_VSYNC;
 
 		bgfx::Init init;
@@ -359,126 +359,6 @@ public:
 				return true;
 			}
 
-			// Update frame timer
-			int64_t now = bx::getHPCounter();
-			static int64_t last = now;
-			const int64_t frameTime = now - last;
-			last = now;
-			const double freq = double(bx::getHPFrequency());
-			const float deltaTime = float(frameTime / freq);
-			const bgfx::Caps* caps = bgfx::getCaps();
-
-			if (m_size[0] != (int32_t)m_width
-			||  m_size[1] != (int32_t)m_height
-			||  m_recreateFrameBuffers)
-			{
-				destroyFramebuffers();
-				createFramebuffers();
-				m_recreateFrameBuffers = false;
-			}
-
-			// update animation time
-			const float rotationSpeed = 0.75f;
-			m_animationTime += deltaTime * rotationSpeed;
-			if (bx::kPi2 < m_animationTime)
-			{
-				m_animationTime -= bx::kPi2;
-			}
-
-			// Update camera
-			cameraUpdate(deltaTime*0.15f, m_mouseState, ImGui::MouseOverArea() );
-
-			cameraGetViewMtx(m_view);
-
-			updateUniforms();
-
-			bx::mtxProj(m_proj, m_fovY, float(m_size[0]) / float(m_size[1]), 0.01f, 100.0f, caps->homogeneousDepth);
-			bx::mtxProj(m_proj2, m_fovY, float(m_size[0]) / float(m_size[1]), 0.01f, 100.0f, false);
-
-			bgfx::ViewId view = 0;
-
-			// Draw models into scene
-			{
-				bgfx::setViewName(view, "forward scene");
-				bgfx::setViewClear(view
-					, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH
-					, 0x7fb8ffff // clear to a sky blue
-					, 1.0f
-					, 0
-				);
-
-				bgfx::setViewRect(view, 0, 0, uint16_t(m_size[0]), uint16_t(m_size[1]));
-				bgfx::setViewTransform(view, m_view, m_proj);
-				bgfx::setViewFrameBuffer(view, m_frameBuffer);
-
-				bgfx::setState(0
-					| BGFX_STATE_WRITE_RGB
-					| BGFX_STATE_WRITE_A
-					| BGFX_STATE_WRITE_Z
-					| BGFX_STATE_DEPTH_TEST_LESS
-					);
-
-				drawAllModels(view, m_forwardProgram, m_modelUniforms);
-
-				++view;
-			}
-
-			float orthoProj[16];
-			bx::mtxOrtho(orthoProj, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, caps->homogeneousDepth);
-			{
-				// clear out transform stack
-				float identity[16];
-				bx::mtxIdentity(identity);
-				bgfx::setTransform(identity);
-			}
-
-			// Convert depth to linear depth for shadow depth compare
-			{
-				bgfx::setViewName(view, "linear depth");
-				bgfx::setViewRect(view, 0, 0, uint16_t(m_width), uint16_t(m_height));
-				bgfx::setViewTransform(view, NULL, orthoProj);
-				bgfx::setViewFrameBuffer(view, m_linearDepth.m_buffer);
-				bgfx::setState(0
-					| BGFX_STATE_WRITE_RGB
-					| BGFX_STATE_WRITE_A
-					| BGFX_STATE_DEPTH_TEST_ALWAYS
-					);
-				bgfx::setTexture(0, s_depth, m_frameBufferTex[FRAMEBUFFER_RT_DEPTH]);
-				m_uniforms.submit();
-				screenSpaceQuad(caps->originBottomLeft);
-				bgfx::submit(view, m_linearDepthProgram);
-				++view;
-			}
-
-			// optionally, apply dof
-			const bool useOrDebugDof = m_useBokehDof || m_showDebugVisualization;
-			if (useOrDebugDof)
-			{
-				view = drawDepthOfField(view, m_frameBufferTex[FRAMEBUFFER_RT_COLOR], orthoProj, caps->originBottomLeft);
-			}
-			else
-			{
-				bgfx::setViewName(view, "display");
-				bgfx::setViewClear(view
-					, BGFX_CLEAR_NONE
-					, 0
-					, 1.0f
-					, 0
-				);
-
-				bgfx::setViewRect(view, 0, 0, uint16_t(m_width), uint16_t(m_height));
-				bgfx::setViewTransform(view, NULL, orthoProj);
-				bgfx::setViewFrameBuffer(view, BGFX_INVALID_HANDLE);
-				bgfx::setState(0
-					| BGFX_STATE_WRITE_RGB
-					| BGFX_STATE_WRITE_A
-					);
-				bgfx::setTexture(0, s_color, m_frameBufferTex[FRAMEBUFFER_RT_COLOR]);
-				screenSpaceQuad(caps->originBottomLeft);
-				bgfx::submit(view, m_copyLinearToGammaProgram);
-				++view;
-			}
-
 			// Draw UI
 			imguiBeginFrame(m_mouseState.m_mx
 				, m_mouseState.m_my
@@ -492,90 +372,217 @@ public:
 
 			showExampleDialog(this);
 
-			ImGui::SetNextWindowPos(
-				ImVec2(m_width - m_width / 4.0f - 10.0f, 10.0f)
-				, ImGuiCond_FirstUseEver
-				);
-			ImGui::SetNextWindowSize(
-				ImVec2(m_width / 4.0f, m_height / 1.35f)
-				, ImGuiCond_FirstUseEver
-				);
-			ImGui::Begin("Settings"
-				, NULL
-				, 0
-				);
+			// Update frame timer
+			int64_t now = bx::getHPCounter();
+			static int64_t last = now;
+			const int64_t frameTime = now - last;
+			last = now;
+			const double freq = double(bx::getHPFrequency());
+			const float deltaTime = float(frameTime / freq);
+			const bgfx::Caps* caps = bgfx::getCaps();
 
-			ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.5f);
-
+			if (BGFX_CAPS_FORMAT_TEXTURE_NONE == caps->formats[bgfx::TextureFormat::D32F])
 			{
-				ImGui::Checkbox("use bokeh dof", &m_useBokehDof);
-				if (ImGui::IsItemHovered())
-					ImGui::SetTooltip("turn effect on and off");
-
-				ImGui::Checkbox("use single pass at full res", &m_useSinglePassBokehDof);
-				if (ImGui::IsItemHovered())
-				{
-					ImGui::BeginTooltip();
-					ImGui::Text("calculate in a single pass at full resolution or use");
-					ImGui::Text("multiple passes to compute at lower res and composite");
-					ImGui::EndTooltip();
-				}
-
-				ImGui::Checkbox("show debug vis", &m_showDebugVisualization);
-				if (ImGui::IsItemHovered())
-				{
-					ImGui::BeginTooltip();
-					ImGui::Text("apply coloration to screen. fades from grey to orange with");
-					ImGui::Text("increasing foreground blur. from grey to blue in background");
-					ImGui::EndTooltip();
-				}
-				ImGui::Separator();
-
-				bool isChanged = false;
-
-				ImGui::Text("blur controls:");
-				isChanged |= ImGui::SliderFloat("max blur size", &m_maxBlurSize, 10.0f, 50.0f);
-				if (ImGui::IsItemHovered())
-					ImGui::SetTooltip("maximum blur size in screen pixels");
-
-				ImGui::SliderFloat("focusPoint", &m_focusPoint, 1.0f, 20.0f);
-				if (ImGui::IsItemHovered())
-					ImGui::SetTooltip("distance to focus plane");
-
-				ImGui::SliderFloat("focusScale", &m_focusScale, 0.0f, 10.0f);
-				if (ImGui::IsItemHovered())
-					ImGui::SetTooltip("multiply focus calculation, larger=tighter focus");
-				ImGui::Separator();
-
-				ImGui::Text("bokeh shape and sample controls:");
-				isChanged |= ImGui::SliderFloat("radiusScale", &m_radiusScale, 0.5f, 4.0f);
-				if (ImGui::IsItemHovered())
-					ImGui::SetTooltip("controls number of samples taken");
-
-				isChanged |= ImGui::SliderInt("lobe count", &m_lobeCount, 1, 8);
-				if (ImGui::IsItemHovered())
-					ImGui::SetTooltip("using triangle lobes to emulate aperture blades");
-
-				isChanged |= ImGui::SliderFloat("lobe pinch", &m_lobePinch, 0.0f, 1.0f);
-				if (ImGui::IsItemHovered())
-					ImGui::SetTooltip("adjust lobe shape, 0=round, 1=starry");
-
-				isChanged |= ImGui::SliderFloat("lobe rotation", &m_lobeRotation, -1.0f, 1.0f);
-
-				if (isChanged)
-				{
-					updateDisplayBokehTexture(m_radiusScale, m_maxBlurSize, m_lobeCount, (1.0f-m_lobePinch), 1.0f, m_lobeRotation);
-				}
-
-				ImGui::Text("number of samples taken: %d", m_sampleCount);
-				if (ImGui::IsItemHovered())
-					ImGui::SetTooltip("number of sample taps as determined by radiusScale and maxBlurSize");
-
-
-				ImGui::Image(m_bokehTexture, ImVec2(128.0f, 128.0f) );
+				bgfx::dbgTextPrintf(0, 0, 0x1f, " D32F texture is not supported. ");
 			}
+			else
+			{
+				if (m_size[0] != (int32_t)m_width
+				||  m_size[1] != (int32_t)m_height
+				||  m_recreateFrameBuffers)
+				{
+					destroyFramebuffers();
+					createFramebuffers();
+					m_recreateFrameBuffers = false;
+				}
 
-			ImGui::End();
+				// update animation time
+				const float rotationSpeed = 0.75f;
+				m_animationTime += deltaTime * rotationSpeed;
+				if (bx::kPi2 < m_animationTime)
+				{
+					m_animationTime -= bx::kPi2;
+				}
+
+				// Update camera
+				cameraUpdate(deltaTime*0.15f, m_mouseState, ImGui::MouseOverArea() );
+
+				cameraGetViewMtx(m_view);
+
+				updateUniforms();
+
+				bx::mtxProj(m_proj, m_fovY, float(m_size[0]) / float(m_size[1]), 0.01f, 100.0f, caps->homogeneousDepth);
+				bx::mtxProj(m_proj2, m_fovY, float(m_size[0]) / float(m_size[1]), 0.01f, 100.0f, false);
+
+				bgfx::ViewId view = 0;
+
+				// Draw models into scene
+				{
+					bgfx::setViewName(view, "forward scene");
+					bgfx::setViewClear(view
+						, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH
+						, 0x7fb8ffff // clear to a sky blue
+						, 1.0f
+						, 0
+					);
+
+					bgfx::setViewRect(view, 0, 0, uint16_t(m_size[0]), uint16_t(m_size[1]));
+					bgfx::setViewTransform(view, m_view, m_proj);
+					bgfx::setViewFrameBuffer(view, m_frameBuffer);
+
+					bgfx::setState(0
+						| BGFX_STATE_WRITE_RGB
+						| BGFX_STATE_WRITE_A
+						| BGFX_STATE_WRITE_Z
+						| BGFX_STATE_DEPTH_TEST_LESS
+						);
+
+					drawAllModels(view, m_forwardProgram, m_modelUniforms);
+
+					++view;
+				}
+
+				float orthoProj[16];
+				bx::mtxOrtho(orthoProj, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, caps->homogeneousDepth);
+				{
+					// clear out transform stack
+					float identity[16];
+					bx::mtxIdentity(identity);
+					bgfx::setTransform(identity);
+				}
+
+				// Convert depth to linear depth for shadow depth compare
+				{
+					bgfx::setViewName(view, "linear depth");
+					bgfx::setViewRect(view, 0, 0, uint16_t(m_width), uint16_t(m_height));
+					bgfx::setViewTransform(view, NULL, orthoProj);
+					bgfx::setViewFrameBuffer(view, m_linearDepth.m_buffer);
+					bgfx::setState(0
+						| BGFX_STATE_WRITE_RGB
+						| BGFX_STATE_WRITE_A
+						| BGFX_STATE_DEPTH_TEST_ALWAYS
+						);
+					bgfx::setTexture(0, s_depth, m_frameBufferTex[FRAMEBUFFER_RT_DEPTH]);
+					m_uniforms.submit();
+					screenSpaceQuad(caps->originBottomLeft);
+					bgfx::submit(view, m_linearDepthProgram);
+					++view;
+				}
+
+				// optionally, apply dof
+				const bool useOrDebugDof = m_useBokehDof || m_showDebugVisualization;
+				if (useOrDebugDof)
+				{
+					view = drawDepthOfField(view, m_frameBufferTex[FRAMEBUFFER_RT_COLOR], orthoProj, caps->originBottomLeft);
+				}
+				else
+				{
+					bgfx::setViewName(view, "display");
+					bgfx::setViewClear(view
+						, BGFX_CLEAR_NONE
+						, 0
+						, 1.0f
+						, 0
+					);
+
+					bgfx::setViewRect(view, 0, 0, uint16_t(m_width), uint16_t(m_height));
+					bgfx::setViewTransform(view, NULL, orthoProj);
+					bgfx::setViewFrameBuffer(view, BGFX_INVALID_HANDLE);
+					bgfx::setState(0
+						| BGFX_STATE_WRITE_RGB
+						| BGFX_STATE_WRITE_A
+						);
+					bgfx::setTexture(0, s_color, m_frameBufferTex[FRAMEBUFFER_RT_COLOR]);
+					screenSpaceQuad(caps->originBottomLeft);
+					bgfx::submit(view, m_copyLinearToGammaProgram);
+					++view;
+				}
+
+				ImGui::SetNextWindowPos(
+					ImVec2(m_width - m_width / 4.0f - 10.0f, 10.0f)
+					, ImGuiCond_FirstUseEver
+					);
+				ImGui::SetNextWindowSize(
+					ImVec2(m_width / 4.0f, m_height / 1.35f)
+					, ImGuiCond_FirstUseEver
+					);
+				ImGui::Begin("Settings"
+					, NULL
+					, 0
+					);
+
+				ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.5f);
+
+				{
+					ImGui::Checkbox("use bokeh dof", &m_useBokehDof);
+					if (ImGui::IsItemHovered())
+						ImGui::SetTooltip("turn effect on and off");
+
+					ImGui::Checkbox("use single pass at full res", &m_useSinglePassBokehDof);
+					if (ImGui::IsItemHovered())
+					{
+						ImGui::BeginTooltip();
+						ImGui::Text("calculate in a single pass at full resolution or use");
+						ImGui::Text("multiple passes to compute at lower res and composite");
+						ImGui::EndTooltip();
+					}
+
+					ImGui::Checkbox("show debug vis", &m_showDebugVisualization);
+					if (ImGui::IsItemHovered())
+					{
+						ImGui::BeginTooltip();
+						ImGui::Text("apply coloration to screen. fades from grey to orange with");
+						ImGui::Text("increasing foreground blur. from grey to blue in background");
+						ImGui::EndTooltip();
+					}
+					ImGui::Separator();
+
+					bool isChanged = false;
+
+					ImGui::Text("blur controls:");
+					isChanged |= ImGui::SliderFloat("max blur size", &m_maxBlurSize, 10.0f, 50.0f);
+					if (ImGui::IsItemHovered())
+						ImGui::SetTooltip("maximum blur size in screen pixels");
+
+					ImGui::SliderFloat("focusPoint", &m_focusPoint, 1.0f, 20.0f);
+					if (ImGui::IsItemHovered())
+						ImGui::SetTooltip("distance to focus plane");
+
+					ImGui::SliderFloat("focusScale", &m_focusScale, 0.0f, 10.0f);
+					if (ImGui::IsItemHovered())
+						ImGui::SetTooltip("multiply focus calculation, larger=tighter focus");
+					ImGui::Separator();
+
+					ImGui::Text("bokeh shape and sample controls:");
+					isChanged |= ImGui::SliderFloat("radiusScale", &m_radiusScale, 0.5f, 4.0f);
+					if (ImGui::IsItemHovered())
+						ImGui::SetTooltip("controls number of samples taken");
+
+					isChanged |= ImGui::SliderInt("lobe count", &m_lobeCount, 1, 8);
+					if (ImGui::IsItemHovered())
+						ImGui::SetTooltip("using triangle lobes to emulate aperture blades");
+
+					isChanged |= ImGui::SliderFloat("lobe pinch", &m_lobePinch, 0.0f, 1.0f);
+					if (ImGui::IsItemHovered())
+						ImGui::SetTooltip("adjust lobe shape, 0=round, 1=starry");
+
+					isChanged |= ImGui::SliderFloat("lobe rotation", &m_lobeRotation, -1.0f, 1.0f);
+
+					if (isChanged)
+					{
+						updateDisplayBokehTexture(m_radiusScale, m_maxBlurSize, m_lobeCount, (1.0f-m_lobePinch), 1.0f, m_lobeRotation);
+					}
+
+					ImGui::Text("number of samples taken: %d", m_sampleCount);
+					if (ImGui::IsItemHovered())
+						ImGui::SetTooltip("number of sample taps as determined by radiusScale and maxBlurSize");
+
+
+					ImGui::Image(m_bokehTexture, ImVec2(128.0f, 128.0f) );
+				}
+
+				ImGui::End();
+			}
 
 			imguiEndFrame();
 
