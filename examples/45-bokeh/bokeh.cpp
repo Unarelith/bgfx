@@ -383,7 +383,7 @@ public:
 
 			if (BGFX_CAPS_FORMAT_TEXTURE_NONE == caps->formats[bgfx::TextureFormat::D32F])
 			{
-				bgfx::dbgTextPrintf(0, 0, 0x1f, " D32F texture is not supported. ");
+				bgfx::dbgTextPrintf(0, 0, 0x1f, " Texture format D32F is not supported. ");
 			}
 			else
 			{
