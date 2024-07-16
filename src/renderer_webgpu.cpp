@@ -373,13 +373,13 @@ namespace bgfx { namespace webgpu
 		{ wgpu::TextureFormat::RGB10A2Unorm,        wgpu::TextureFormat::Undefined        },  // RGB10A2
 		{ wgpu::TextureFormat::RG11B10Ufloat,       wgpu::TextureFormat::Undefined        },  // RG11B10F
 		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // UnknownDepth
-		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // D16
+		{ wgpu::TextureFormat::Depth16Unorm,        wgpu::TextureFormat::Undefined        },  // D16
 		{ wgpu::TextureFormat::Depth24Plus,         wgpu::TextureFormat::Undefined        },  // D24
 		{ wgpu::TextureFormat::Depth24PlusStencil8, wgpu::TextureFormat::Undefined        },  // D24S8
 		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // D32
 		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // D16F
 		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // D24F
-		{ wgpu::TextureFormat::Undefined,           wgpu::TextureFormat::Undefined        },  // D32F
+		{ wgpu::TextureFormat::Depth32Float,        wgpu::TextureFormat::Undefined        },  // D32F
 		{ wgpu::TextureFormat::Stencil8,            wgpu::TextureFormat::Undefined        },  // D0S8
 	};
 	BX_STATIC_ASSERT(TextureFormat::Count == BX_COUNTOF(s_textureFormat));
