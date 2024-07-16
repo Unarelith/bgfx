@@ -308,7 +308,11 @@ vec4 bgfxTexelFetch(BgfxSampler2D _sampler, ivec2 _coord, int _lod)
 
 vec4 bgfxTexelFetchOffset(BgfxSampler2D _sampler, ivec2 _coord, int _lod, ivec2 _offset)
 {
+#if !BGFX_SHADER_LANGUAGE_WGSL
 	return _sampler.m_texture.Load(ivec3(_coord, _lod), _offset );
+#else
+	return _sampler.m_texture.Load(ivec3(_coord + _offset, _lod) );
+#endif
 }
 
 vec2 bgfxTextureSize(BgfxSampler2D _sampler, int _lod)
