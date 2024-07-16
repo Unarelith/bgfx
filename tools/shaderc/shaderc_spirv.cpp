@@ -869,31 +869,30 @@ namespace bgfx { namespace spirv
 
 					if (convertToWGSL)
 					{
-#define USE_TINT 1
-#if USE_TINT
-						std::string disasmStr = disasm.str();
-						size_t rowMajor;
-						while ((rowMajor = disasmStr.find("RowMajor")) != std::string::npos)
-							disasmStr.replace(rowMajor, 3, "Col");
+						bool useTint = _options.shaderType == 'c';
+						if (useTint)
+						{
+							std::string disasmStr = disasm.str();
+							size_t rowMajor;
+							while ((rowMajor = disasmStr.find("RowMajor")) != std::string::npos)
+								disasmStr.replace(rowMajor, 3, "Col");
 
-						std::ofstream tmp("tmp.spvasm");
-						assert(tmp.is_open());
-						tmp.write(disasmStr.c_str(), disasmStr.length());
-						tmp.close();
+							std::ofstream tmp("tmp.spvasm");
+							assert(tmp.is_open());
+							tmp.write(disasmStr.c_str(), disasmStr.length());
+							tmp.close();
 
-#ifdef _WIN32
-						system("D:\\Dev\\Projects\\bgfx.cmake\\dawn\\cmake-build\\Debug\\tint.exe --allow-non-uniform-derivatives tmp.spvasm -f wgsl -o tmp.wgsl");
-#else
-						system("/mnt/d/Dev/Projects/bgfx.cmake/dawn/cmake-build-linux/tint --allow-non-uniform-derivatives tmp.spvasm -f wgsl -o tmp.wgsl");
-#endif
-#else // USE_TINT
-						std::ofstream tmp("tmp.spv", std::ios::binary);
-						assert(tmp.is_open());
-						tmp.write((const char *)spirv.data(), spirv.size() * 4);
-						tmp.close();
+							system("D:\\Dev\\Projects\\bgfx.cmake\\dawn\\cmake-build\\Debug\\tint.exe --allow-non-uniform-derivatives tmp.spvasm -f wgsl -o tmp.wgsl");
+						}
+						else
+						{
+							std::ofstream tmp("tmp.spv", std::ios::binary);
+							assert(tmp.is_open());
+							tmp.write((const char *)spirv.data(), spirv.size() * 4);
+							tmp.close();
 
-						system("naga tmp.spv tmp.wgsl --keep-coordinate-space");
-#endif // USE_TINT
+							system("naga tmp.spv tmp.wgsl --keep-coordinate-space");
+						}
 
 						std::ifstream file("tmp.wgsl");
 						assert(file.is_open());
@@ -906,28 +905,24 @@ namespace bgfx { namespace spirv
 						file.read(wgsl.data(), fileSize);
 						file.close();
 
-#if !USE_TINT
-						std::string prefix = "diagnostic(off, derivative_uniformity);\n";
-						fileSize += prefix.length();
-						wgsl = prefix + wgsl;
-#endif
+						if (!useTint)
+						{
+							std::string prefix = "diagnostic(off, derivative_uniformity);\n";
+							fileSize += prefix.length();
+							wgsl = prefix + wgsl;
+						}
 
 						size_t numElements = fileSize / sizeof(uint32_t);
 						spirv.clear();
 						spirv.resize(numElements + 1);
 						std::memcpy(spirv.data(), wgsl.data(), fileSize);
 
-#ifdef _WIN32
-#if USE_TINT
-						system("del tmp.spvasm");
-#else
-						system("del tmp.spv");
-#endif
+						if (useTint)
+							system("del tmp.spvasm");
+						else
+							system("del tmp.spv");
+
 						system("del tmp.wgsl");
-#else
-						system("rm tmp.spvasm");
-						system("rm tmp.wgsl");
-#endif
 
 						// std::cout << "fileSize: " << fileSize << std::endl;
 						// std::cout.write((const char *)spirv.data(), fileSize);
