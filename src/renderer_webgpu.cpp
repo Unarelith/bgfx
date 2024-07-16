@@ -1190,13 +1190,9 @@ namespace bgfx { namespace webgpu
 				float proj[16];
 				bx::mtxOrtho(proj, 0.0f, (float)width, (float)height, 0.0f, 0.0f, 1000.0f, 0.0f, false);
 
-				// TODO: Matrices need to be transposed because Tint compiler doesn't support RowMajor when compiling from SPIR-V
-				float t[16];
-				bx::mtxTranspose(t, (const float *)proj);
-
 				PredefinedUniform& predefined = program.m_predefined[0];
 				uint8_t flags = predefined.m_type;
-				setShaderUniform(flags, predefined.m_loc, t, 4);
+				setShaderUniform(flags, predefined.m_loc, proj, 4);
 
 				BX_ASSERT(program.m_vsh->m_size > 0, "Not supposed to happen");
 				const uint32_t voffset = scratchBuffer.write(m_vsScratch, program.m_vsh->m_gpuSize);
@@ -1480,10 +1476,7 @@ namespace bgfx { namespace webgpu
 
 		void setShaderUniform4x4f(uint8_t _flags, uint32_t _loc, const void* _val, uint32_t _numRegs)
 		{
-			// TODO: Matrices need to be transposed because Tint compiler doesn't support RowMajor when compiling from SPIR-V
-			float t[16];
-			bx::mtxTranspose(t, (const float *)_val);
-			setShaderUniform(_flags, _loc, t, _numRegs);
+			setShaderUniform(_flags, _loc, _val, _numRegs);
 		}
 
 		void commit(UniformBuffer& _uniformBuffer)
@@ -1554,10 +1547,7 @@ namespace bgfx { namespace webgpu
 				case UniformType::Mat4:
 				case UniformType::Mat4 | kUniformFragmentBit:
 					{
-						// TODO: Matrices need to be transposed because Tint compiler doesn't support RowMajor when compiling from SPIR-V
-						float t[16];
-						bx::mtxTranspose(t, (const float *)data);
-						setShaderUniform(uint8_t(type), loc, t, num);
+						setShaderUniform(uint8_t(type), loc, data, num);
 					}
 					break;
 				case UniformType::End:
