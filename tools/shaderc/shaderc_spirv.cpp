@@ -869,7 +869,7 @@ namespace bgfx { namespace spirv
 
 					if (convertToWGSL)
 					{
-#define USE_TINT 0
+#define USE_TINT 1
 #if USE_TINT
 						std::string disasmStr = disasm.str();
 						size_t rowMajor;
@@ -892,7 +892,7 @@ namespace bgfx { namespace spirv
 						tmp.write((const char *)spirv.data(), spirv.size() * 4);
 						tmp.close();
 
-						system("naga tmp.spv tmp.wgsl");
+						system("naga tmp.spv tmp.wgsl --keep-coordinate-space");
 #endif // USE_TINT
 
 						std::ifstream file("tmp.wgsl");
