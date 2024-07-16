@@ -14,7 +14,7 @@
 #	error "Compute is not supported!"
 #endif // BGFX_SHADER_LANGUAGE_HLSL
 
-#if BGFX_SHADER_LANGUAGE_METAL || BGFX_SHADER_LANGUAGE_SPIRV
+#if (BGFX_SHADER_LANGUAGE_METAL || BGFX_SHADER_LANGUAGE_SPIRV) && !BGFX_SHADER_LANGUAGE_WGSL
 #	define FORMAT(_format) [[spv::format_ ## _format]]
 #	define WRITEONLY [[spv::nonreadable]]
 #else
