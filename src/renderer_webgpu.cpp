@@ -2679,10 +2679,12 @@ namespace bgfx { namespace webgpu
 					{
 						switch (componentType)
 						{
-						case TextureComponentType::Float: return wgpu::TextureSampleType::Float;
-						case TextureComponentType::Int:   return wgpu::TextureSampleType::Sint;
-						case TextureComponentType::Uint:  return wgpu::TextureSampleType::Uint;
-						default:                          return wgpu::TextureSampleType::Float;
+						case TextureComponentType::Float:             return wgpu::TextureSampleType::Float;
+						case TextureComponentType::Int:               return wgpu::TextureSampleType::Sint;
+						case TextureComponentType::Uint:              return wgpu::TextureSampleType::Uint;
+						case TextureComponentType::Depth:             return wgpu::TextureSampleType::Depth;
+						case TextureComponentType::UnfilterableFloat: return wgpu::TextureSampleType::UnfilterableFloat;
+						default:                                      return wgpu::TextureSampleType::Undefined;
 						}
 					};
 
