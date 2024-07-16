@@ -617,7 +617,7 @@ namespace bgfx { namespace webgpu
 			g_caps.limits.maxTextureSize   = 8192;
 			g_caps.limits.maxFBAttachments = 4;
 			g_caps.supported |= BGFX_CAPS_TEXTURE_CUBE_ARRAY;
-			g_caps.supported |= BGFX_CAPS_DRAW_INDIRECT;
+			// g_caps.supported |= BGFX_CAPS_DRAW_INDIRECT;
 
 			g_caps.limits.maxTextureLayers = 2048;
 			g_caps.limits.maxVertexStreams = BGFX_CONFIG_MAX_VERTEX_STREAMS;
