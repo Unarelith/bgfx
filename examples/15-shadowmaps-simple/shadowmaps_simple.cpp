@@ -250,9 +250,9 @@ public:
 
 			imguiEndFrame();
 
-			if (BGFX_CAPS_FORMAT_TEXTURE_NONE == bgfx::getCaps()->formats[bgfx::TextureFormat::D16])
+			if (bgfx::getRendererType() == bgfx::RendererType::WebGPU)
 			{
-				bgfx::dbgTextPrintf(0, 0, 0x1f, " Texture format D16 is not supported. ");
+				bgfx::dbgTextPrintf(0, 0, 0x1f, " Sampling depth textures isn't possible yet with WebGPU. ");
 				bgfx::frame();
 				return true;
 			}

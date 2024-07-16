@@ -405,9 +405,9 @@ public:
 			const float deltaTime = float(frameTime / freq);
 			const bgfx::Caps* caps = bgfx::getCaps();
 
-			if (BGFX_CAPS_FORMAT_TEXTURE_NONE == caps->formats[bgfx::TextureFormat::D32F])
+			if (bgfx::getRendererType() == bgfx::RendererType::WebGPU)
 			{
-				bgfx::dbgTextPrintf(0, 0, 0x1f, " Texture format D32F is not supported. ");
+				bgfx::dbgTextPrintf(0, 0, 0x1f, " Sampling depth textures isn't possible yet with WebGPU. ");
 			}
 			else
 			{

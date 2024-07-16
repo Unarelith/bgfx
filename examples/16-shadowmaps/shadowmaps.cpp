@@ -1722,7 +1722,7 @@ public:
 
 		ShadowMapSettings* currentSmSettings = &m_smSettings[m_settings.m_lightType][m_settings.m_depthImpl][m_settings.m_smImpl];
 
-		if (BGFX_CAPS_FORMAT_TEXTURE_NONE != bgfx::getCaps()->formats[bgfx::TextureFormat::D32F])
+		if (bgfx::getRendererType() != bgfx::RendererType::WebGPU)
 		{
 			// Render targets.
 			uint16_t shadowMapSize = 1 << uint32_t(currentSmSettings->m_sizePwrTwo);
@@ -1809,10 +1809,10 @@ public:
 
 			const bgfx::Caps* caps = bgfx::getCaps();
 
-			if (BGFX_CAPS_FORMAT_TEXTURE_NONE == caps->formats[bgfx::TextureFormat::D32F])
+			if (bgfx::getRendererType() == bgfx::RendererType::WebGPU)
 			{
 				imguiEndFrame();
-				bgfx::dbgTextPrintf(0, 0, 0x1f, " Texture format D32F is not supported. ");
+				bgfx::dbgTextPrintf(0, 0, 0x1f, " Sampling depth textures isn't possible yet with WebGPU. ");
 				bgfx::frame();
 				return true;
 			}
