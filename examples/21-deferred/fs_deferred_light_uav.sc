@@ -9,7 +9,7 @@ $input v_texcoord0
 #include <bgfx_compute.sh>
 
 SAMPLER2D(s_normal, 0);
-SAMPLER2D(s_depth,  1);
+SAMPLER2DDEPTH(s_depth,  1);
 
 IMAGE2D_RW(i_light, rgba8, 3);
 

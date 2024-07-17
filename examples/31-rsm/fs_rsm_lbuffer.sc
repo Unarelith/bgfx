@@ -8,7 +8,7 @@ $input v_lightCenterScale, v_color0
 #include "../common/common.sh"
 
 SAMPLER2D(s_normal, 0); // Normal output from gbuffer
-SAMPLER2D(s_depth,  1);  // Depth output from gbuffer
+SAMPLER2DDEPTH(s_depth,  1);  // Depth output from gbuffer
 
 uniform mat4 u_invMvp;
 

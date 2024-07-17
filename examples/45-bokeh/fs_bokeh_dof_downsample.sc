@@ -10,7 +10,7 @@ $input v_texcoord0
 #include "bokeh_dof.sh"
 
 SAMPLER2D(s_color, 0);
-SAMPLER2D(s_depth, 1);
+SAMPLER2DDEPTH(s_depth, 1);
 
 void main()
 {

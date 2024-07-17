@@ -8,7 +8,7 @@ $input v_texcoord0
 #include "../common/common.sh"
 #include "parameters.sh"
 
-SAMPLER2D(s_depth, 0);
+SAMPLER2DDEPTH(s_depth, 0);
 
 #define DEPTH_EPSILON	1e-4
 

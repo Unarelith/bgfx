@@ -10,7 +10,7 @@ $input v_texcoord0
 SAMPLER2D(s_normal, 0);
 SAMPLER2D(s_color,  1);
 SAMPLER2D(s_light,  2);
-SAMPLER2D(s_depth,  3);
+SAMPLER2DDEPTH(s_depth,  3);
 SAMPLER2DSHADOW(s_shadowMap, 4);
 
 // Single directional light for entire scene

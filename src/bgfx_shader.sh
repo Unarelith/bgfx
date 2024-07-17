@@ -111,6 +111,14 @@ struct BgfxSampler2D
 	Texture2D m_texture;
 };
 
+#		if BGFX_SHADER_LANGUAGE_WGSL
+struct BgfxSampler2DDepth
+{
+	SamplerComparisonState m_sampler;
+	Texture2D m_texture;
+};
+#		endif // BGFX_SHADER_LANGUAGE_WGSL
+
 struct BgfxISampler2D
 {
 	Texture2D<ivec4> m_texture;
@@ -432,6 +440,50 @@ vec3 bgfxTextureSize(BgfxSampler3D _sampler, int _lod)
 	return result;
 }
 
+#		if BGFX_SHADER_LANGUAGE_WGSL
+vec4 bgfxTexture2D(BgfxSampler2DDepth _sampler, vec2 _coord)
+{
+	return _sampler.m_texture.Sample(_sampler.m_sampler, _coord);
+}
+
+vec4 bgfxTexture2DBias(BgfxSampler2DDepth _sampler, vec2 _coord, float _bias)
+{
+	return _sampler.m_texture.SampleBias(_sampler.m_sampler, _coord, _bias);
+}
+
+vec4 bgfxTexture2DLod(BgfxSampler2DDepth _sampler, vec2 _coord, float _level)
+{
+	return _sampler.m_texture.SampleLevel(_sampler.m_sampler, _coord, _level);
+}
+
+vec4 bgfxTexture2DLodOffset(BgfxSampler2DDepth _sampler, vec2 _coord, float _level, ivec2 _offset)
+{
+	return _sampler.m_texture.SampleLevel(_sampler.m_sampler, _coord, _level, _offset);
+}
+
+vec4 bgfxTexture2DProj(BgfxSampler2DDepth _sampler, vec3 _coord)
+{
+	vec2 coord = _coord.xy * rcp(_coord.z);
+	return _sampler.m_texture.Sample(_sampler.m_sampler, coord);
+}
+
+vec4 bgfxTexture2DProj(BgfxSampler2DDepth _sampler, vec4 _coord)
+{
+	vec2 coord = _coord.xy * rcp(_coord.w);
+	return _sampler.m_texture.Sample(_sampler.m_sampler, coord);
+}
+
+vec4 bgfxTexelFetch(BgfxSampler2DDepth _sampler, ivec2 _coord, int _lod)
+{
+	return _sampler.m_texture.Load(ivec3(_coord, _lod) );
+}
+
+vec4 bgfxTexelFetchOffset(BgfxSampler2DDepth _sampler, ivec2 _coord, int _lod, ivec2 _offset)
+{
+	return _sampler.m_texture.Load(ivec3(_coord + _offset, _lod) );
+}
+#		endif // BGFX_SHADER_LANGUAGE_WGSL
+
 #		define SAMPLER2D(_name, _reg) \
 			uniform SamplerState _name ## Sampler : REGISTER(s, _reg); \
 			uniform Texture2D _name ## Texture : REGISTER(t, _reg); \
@@ -449,6 +501,17 @@ vec3 bgfxTextureSize(BgfxSampler3D _sampler, int _lod)
 #		define texture2DLodOffset(_sampler, _coord, _level, _offset) bgfxTexture2DLodOffset(_sampler, _coord, _level, _offset)
 #		define texture2DProj(_sampler, _coord) bgfxTexture2DProj(_sampler, _coord)
 #		define texture2DGrad(_sampler, _coord, _dPdx, _dPdy) bgfxTexture2DGrad(_sampler, _coord, _dPdx, _dPdy)
+
+#		if BGFX_SHADER_LANGUAGE_WGSL
+#			define SAMPLER2DDEPTH(_name, _reg) \
+				uniform SamplerComparisonState _name ## SamplerComparison : REGISTER(s, _reg); \
+				uniform Texture2D _name ## Texture : REGISTER(t, _reg); \
+				static BgfxSampler2DDepth _name = { _name ## SamplerComparison, _name ## Texture }
+#			define sampler2DDepth BgfxSampler2DDepth
+#		else
+#			define SAMPLER2DDEPTH(_name, _reg) SAMPLER2D(_name, _reg);
+#			define sampler2DDepth BgfxSampler2D
+#		endif
 
 #		define SAMPLER2DARRAY(_name, _reg) \
 			uniform SamplerState _name ## Sampler : REGISTER(s, _reg); \

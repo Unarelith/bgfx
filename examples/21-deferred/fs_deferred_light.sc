@@ -8,7 +8,7 @@ $input v_texcoord0
 #include "common.sh"
 
 SAMPLER2D(s_normal, 0);
-SAMPLER2D(s_depth,  1);
+SAMPLER2DDEPTH(s_depth,  1);
 
 uniform vec4 u_lightPosRadius[1];
 uniform vec4 u_lightRgbInnerR[1];

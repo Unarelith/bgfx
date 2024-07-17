@@ -8,7 +8,7 @@ $input v_texcoord0
 #include "../common/common.sh"
 #include "parameters.sh"
 
-SAMPLER2D(s_depth, 0);
+SAMPLER2DDEPTH(s_depth, 0);
 
 // from assao sample, cs_assao_prepare_depths.sc
 float ScreenSpaceToViewSpaceDepth( float screenDepth )

@@ -15,9 +15,9 @@ $input v_texcoord0
 SAMPLER2D(s_color,			0); // this frame's shaded color
 SAMPLER2D(s_previousColor,	1); // previous frame's shaded color
 SAMPLER2D(s_velocity,		2); // screenspace delta from previous to current frame
-SAMPLER2D(s_depth,			3); // depth buffer
+SAMPLER2DDEPTH(s_depth,		3); // depth buffer
 
-vec3 FindNearestDepth(sampler2D _depthSampler, vec2 _texCoord) {
+vec3 FindNearestDepth(sampler2DDepth _depthSampler, vec2 _texCoord) {
 	vec2 du = vec2(u_viewTexel.x, 0.0);
 	vec2 dv = vec2(0.0, u_viewTexel.y);
 

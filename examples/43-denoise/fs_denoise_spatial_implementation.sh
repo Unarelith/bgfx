@@ -10,9 +10,9 @@
 #include "parameters.sh"
 #include "normal_encoding.sh"
 
-SAMPLER2D(s_color,  0); // input color, signal to be denoised
-SAMPLER2D(s_normal, 1); // scene's gbuffer normal, used for edge stopping function
-SAMPLER2D(s_depth,  2); // scene's depth, used for edge stopping function
+SAMPLER2D(s_color,		0); // input color, signal to be denoised
+SAMPLER2D(s_normal,		1); // scene's gbuffer normal, used for edge stopping function
+SAMPLER2DDEPTH(s_depth,	2); // scene's depth, used for edge stopping function
 
 void main()
 {

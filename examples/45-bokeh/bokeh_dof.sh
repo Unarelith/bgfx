@@ -173,4 +173,106 @@ vec4 DepthOfField(
 	return vec4(color, averageSampleSize);
 }
 
+#if BGFX_SHADER_LANGUAGE_WGSL
+
+void GetColorAndBlurSize (
+	sampler2D samplerColor,
+	sampler2DDepth samplerDepth,
+	vec2 texCoord,
+	float focusPoint,
+	float focusScale,
+	out vec3 outColor,
+	out float outBlurSize
+) {
+#if USE_PACKED_COLOR_AND_BLUR
+	vec4 colorAndBlurSize = texture2DLod(samplerColor, texCoord, 0);
+	vec3 color = colorAndBlurSize.xyz;
+	float blurSize = colorAndBlurSize.w;
+
+	outColor = color;
+	outBlurSize = blurSize;
+#else
+	vec3 color = texture2DLod(samplerColor, texCoord, 0).xyz;
+	float depth = texture2DLod(samplerDepth, texCoord, 0).x;
+	float blurSize = GetBlurSize(depth, focusPoint, focusScale);
+
+	outColor = color;
+	outBlurSize = blurSize;
+#endif
+}
+
+vec4 DepthOfField(
+	sampler2D samplerColor,
+	sampler2DDepth samplerDepth,
+	vec2 texCoord,
+	float focusPoint,
+	float focusScale
+) {
+	vec3 color;
+	float centerSize;
+	GetColorAndBlurSize(
+		samplerColor,
+		samplerDepth,
+		texCoord,
+		focusPoint,
+		focusScale,
+		/*out*/color,
+		/*out*/centerSize);
+	float absCenterSize = abs(centerSize);
+
+	// as sample count gets lower, visible banding. disrupt with noise.
+	// use a better random/noise/dither function than this..
+	vec2 pixelCoord = texCoord.xy * u_viewRect.zw;
+	float random = ShadertoyNoise(pixelCoord + vec2(314.0, 159.0)*u_frameIdx);
+	float theta = random * TWO_PI;
+	float thetaStep = GOLDEN_ANGLE;
+
+	float total = 1.0;
+	float totalSampleSize = 0.0;
+	float loopValue = u_radiusScale;
+	float loopEnd = u_maxBlurSize;
+
+	while (loopValue < loopEnd)
+	{
+		float radius = loopValue;
+		float shapeScale = BokehShapeFromAngle(
+			u_lobeCount,
+			u_lobeRadiusMin,
+			u_lobeRadiusDelta2x,
+			u_lobeRotation,
+			theta);
+		vec2 spiralCoord = texCoord + vec2(cos(theta), sin(theta)) * u_viewTexel.xy * (radius * shapeScale);
+
+		vec3 sampleColor;
+		float sampleSize;
+		GetColorAndBlurSize(
+			samplerColor,
+			samplerDepth,
+			spiralCoord,
+			focusPoint,
+			focusScale,
+			/*out*/sampleColor,
+			/*out*/sampleSize);
+		float absSampleSize = abs(sampleSize);
+
+		// using signed sample size as proxy for depth comparison
+		if (sampleSize > centerSize)
+		{
+			absSampleSize = clamp(absSampleSize, 0.0, absCenterSize*2.0);
+		}
+		float m = smoothstep(radius-0.5, radius+0.5, absSampleSize);
+		color += mix(color/total, sampleColor, m);
+		totalSampleSize += absSampleSize;
+		total += 1.0;
+		theta += thetaStep;
+
+		loopValue += (u_radiusScale/loopValue);
+	}
+
+	color *= 1.0/total;
+	float averageSampleSize = totalSampleSize / (total-1.0);
+	return vec4(color, averageSampleSize);
+}
+#endif // BGFX_SHADER_LANGUAGE_WGSL
+
 #endif
