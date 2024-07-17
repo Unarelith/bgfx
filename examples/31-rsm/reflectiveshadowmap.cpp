@@ -447,14 +447,6 @@ public:
 
 			showExampleDialog(this);
 
-			if (bgfx::getRendererType() == bgfx::RendererType::WebGPU)
-			{
-				imguiEndFrame();
-				bgfx::dbgTextPrintf(0, 0, 0x1f, " Sampling depth textures isn't possible yet with WebGPU. ");
-				bgfx::frame();
-				return true;
-			}
-
 			// Update frame timer
 			int64_t now = bx::getHPCounter();
 			static int64_t last = now;

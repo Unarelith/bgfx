@@ -405,222 +405,215 @@ public:
 			const float deltaTime = float(frameTime / freq);
 			const bgfx::Caps* caps = bgfx::getCaps();
 
-			if (bgfx::getRendererType() == bgfx::RendererType::WebGPU)
+			if (m_size[0] != (int32_t)m_width
+			||  m_size[1] != (int32_t)m_height
+			||  m_recreateFrameBuffers)
 			{
-				bgfx::dbgTextPrintf(0, 0, 0x1f, " Sampling depth textures isn't possible yet with WebGPU. ");
+				destroyFramebuffers();
+				createFramebuffers();
+				m_recreateFrameBuffers = false;
 			}
-			else
+
+			// rotate light
+			const float rotationSpeed = m_moveLight ? 0.75f : 0.0f;
+			m_lightRotation += deltaTime * rotationSpeed;
+			if (bx::kPi2 < m_lightRotation)
 			{
-				if (m_size[0] != (int32_t)m_width
-				||  m_size[1] != (int32_t)m_height
-				||  m_recreateFrameBuffers)
-				{
-					destroyFramebuffers();
-					createFramebuffers();
-					m_recreateFrameBuffers = false;
-				}
+				m_lightRotation -= bx::kPi2;
+			}
+			m_lightModel.position[0] = bx::cos(m_lightRotation) * 3.0f;
+			m_lightModel.position[1] = 1.5f;
+			m_lightModel.position[2] = bx::sin(m_lightRotation) * 3.0f;
 
-				// rotate light
-				const float rotationSpeed = m_moveLight ? 0.75f : 0.0f;
-				m_lightRotation += deltaTime * rotationSpeed;
-				if (bx::kPi2 < m_lightRotation)
-				{
-					m_lightRotation -= bx::kPi2;
-				}
-				m_lightModel.position[0] = bx::cos(m_lightRotation) * 3.0f;
-				m_lightModel.position[1] = 1.5f;
-				m_lightModel.position[2] = bx::sin(m_lightRotation) * 3.0f;
+			// Update camera
+			cameraUpdate(deltaTime*0.15f, m_mouseState, ImGui::MouseOverArea() );
 
-				// Update camera
-				cameraUpdate(deltaTime*0.15f, m_mouseState, ImGui::MouseOverArea() );
+			// Set up matrices for gbuffer
+			cameraGetViewMtx(m_view);
 
-				// Set up matrices for gbuffer
-				cameraGetViewMtx(m_view);
+			updateUniforms();
 
-				updateUniforms();
+			bx::mtxProj(m_proj, m_fovY, float(m_size[0]) / float(m_size[1]), 0.01f, 100.0f, caps->homogeneousDepth);
+			bx::mtxProj(m_proj2, m_fovY, float(m_size[0]) / float(m_size[1]), 0.01f, 100.0f, false);
 
-				bx::mtxProj(m_proj, m_fovY, float(m_size[0]) / float(m_size[1]), 0.01f, 100.0f, caps->homogeneousDepth);
-				bx::mtxProj(m_proj2, m_fovY, float(m_size[0]) / float(m_size[1]), 0.01f, 100.0f, false);
+			bgfx::ViewId view = 0;
 
-				bgfx::ViewId view = 0;
-
-				// Draw everything into gbuffer
-				{
-					bgfx::setViewName(view, "gbuffer");
-					bgfx::setViewClear(view
-						, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH
-						, 0
-						, 1.0f
-						, 0
-					);
-
-					bgfx::setViewRect(view, 0, 0, uint16_t(m_size[0]), uint16_t(m_size[1]));
-					bgfx::setViewTransform(view, m_view, m_proj);
-					// Make sure when we draw it goes into gbuffer and not backbuffer
-					bgfx::setViewFrameBuffer(view, m_gbuffer);
-
-					bgfx::setState(0
-						| BGFX_STATE_WRITE_RGB
-						| BGFX_STATE_WRITE_A
-						| BGFX_STATE_WRITE_Z
-						| BGFX_STATE_DEPTH_TEST_LESS
-						);
-
-					drawAllModels(view, m_gbufferProgram, m_uniforms);
-
-					// draw sphere to visualize light
-					{
-						const float scale = s_meshScale[m_lightModel.mesh];
-						float mtx[16];
-						bx::mtxSRT(mtx
-							, scale
-							, scale
-							, scale
-							, 0.0f
-							, 0.0f
-							, 0.0f
-							, m_lightModel.position[0]
-							, m_lightModel.position[1]
-							, m_lightModel.position[2]
-							);
-
-						m_uniforms.submit();
-						meshSubmit(m_meshes[m_lightModel.mesh], view, m_sphereProgram, mtx);
-					}
-
-					++view;
-				}
-
-				float orthoProj[16];
-				bx::mtxOrtho(orthoProj, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, caps->homogeneousDepth);
-				{
-					// clear out transform stack
-					float identity[16];
-					bx::mtxIdentity(identity);
-					bgfx::setTransform(identity);
-				}
-
-				// Convert depth to linear depth for shadow depth compare
-				{
-					bgfx::setViewName(view, "linear depth");
-
-					bgfx::setViewRect(view, 0, 0, uint16_t(m_width), uint16_t(m_height));
-					bgfx::setViewTransform(view, NULL, orthoProj);
-					bgfx::setViewFrameBuffer(view, m_linearDepth.m_buffer);
-					bgfx::setState(0
-						| BGFX_STATE_WRITE_RGB
-						| BGFX_STATE_WRITE_A
-						| BGFX_STATE_DEPTH_TEST_ALWAYS
-						);
-					bgfx::setTexture(0, s_depth, m_gbufferTex[GBUFFER_RT_DEPTH]);
-					m_uniforms.submit();
-					screenSpaceQuad(caps->originBottomLeft);
-					bgfx::submit(view, m_linearDepthProgram);
-					++view;
-				}
-
-				// Do screen space shadows
-				{
-					bgfx::setViewName(view, "screen space shadows");
-
-					bgfx::setViewRect(view, 0, 0, uint16_t(m_width), uint16_t(m_height));
-					bgfx::setViewTransform(view, NULL, orthoProj);
-					bgfx::setViewFrameBuffer(view, m_shadows.m_buffer);
-					bgfx::setState(0
-						| BGFX_STATE_WRITE_RGB
-						| BGFX_STATE_WRITE_A
-						| BGFX_STATE_DEPTH_TEST_ALWAYS
-						);
-					bgfx::setTexture(0, s_depth, m_linearDepth.m_texture);
-					m_uniforms.submit();
-					screenSpaceQuad(caps->originBottomLeft);
-					bgfx::submit(view, m_shadowsProgram);
-					++view;
-				}
-
-				// Shade gbuffer
-				{
-					bgfx::setViewName(view, "combine");
-
-					bgfx::setViewRect(view, 0, 0, uint16_t(m_width), uint16_t(m_height));
-					bgfx::setViewTransform(view, NULL, orthoProj);
-					bgfx::setViewFrameBuffer(view, BGFX_INVALID_HANDLE);
-					bgfx::setState(0
-						| BGFX_STATE_WRITE_RGB
-						| BGFX_STATE_WRITE_A
-						| BGFX_STATE_DEPTH_TEST_ALWAYS
-						);
-					bgfx::setTexture(0, s_color, m_gbufferTex[GBUFFER_RT_COLOR]);
-					bgfx::setTexture(1, s_normal, m_gbufferTex[GBUFFER_RT_NORMAL]);
-					bgfx::setTexture(2, s_depth, m_linearDepth.m_texture);
-					bgfx::setTexture(3, s_shadows, m_shadows.m_texture);
-					m_uniforms.submit();
-					screenSpaceQuad(caps->originBottomLeft);
-					bgfx::submit(view, m_combineProgram);
-					++view;
-				}
-
-				ImGui::SetNextWindowPos(
-					ImVec2(m_width - m_width / 4.0f - 10.0f, 10.0f)
-					, ImGuiCond_FirstUseEver
-					);
-				ImGui::SetNextWindowSize(
-					ImVec2(m_width / 4.0f, m_height / 2.3f)
-					, ImGuiCond_FirstUseEver
-					);
-				ImGui::Begin("Settings"
-					, NULL
+			// Draw everything into gbuffer
+			{
+				bgfx::setViewName(view, "gbuffer");
+				bgfx::setViewClear(view
+					, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH
 					, 0
+					, 1.0f
+					, 0
+				);
+
+				bgfx::setViewRect(view, 0, 0, uint16_t(m_size[0]), uint16_t(m_size[1]));
+				bgfx::setViewTransform(view, m_view, m_proj);
+				// Make sure when we draw it goes into gbuffer and not backbuffer
+				bgfx::setViewFrameBuffer(view, m_gbuffer);
+
+				bgfx::setState(0
+					| BGFX_STATE_WRITE_RGB
+					| BGFX_STATE_WRITE_A
+					| BGFX_STATE_WRITE_Z
+					| BGFX_STATE_DEPTH_TEST_LESS
 					);
 
-				ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.5f);
+				drawAllModels(view, m_gbufferProgram, m_uniforms);
 
+				// draw sphere to visualize light
 				{
-					ImGui::Text("shadow controls:");
-					ImGui::Checkbox("screen space radius", &m_useScreenSpaceRadius);
-					if (ImGui::IsItemHovered())
-						ImGui::SetTooltip("define radius in pixels or world units");
+					const float scale = s_meshScale[m_lightModel.mesh];
+					float mtx[16];
+					bx::mtxSRT(mtx
+						, scale
+						, scale
+						, scale
+						, 0.0f
+						, 0.0f
+						, 0.0f
+						, m_lightModel.position[0]
+						, m_lightModel.position[1]
+						, m_lightModel.position[2]
+						);
 
-					if (m_useScreenSpaceRadius)
-					{
-						ImGui::SliderFloat("radius in pixels", &m_shadowRadiusPixels, 1.0f, 100.0f);
-					}
-					else
-					{
-						ImGui::SliderFloat("radius in world units", &m_shadowRadius, 1e-3f, 1.0f);
-					}
-
-					ImGui::SliderInt("shadow steps", &m_shadowSteps, 1, 64);
-					if (ImGui::IsItemHovered())
-						ImGui::SetTooltip("number of steps/samples to take between shaded pixel and radius");
-
-					ImGui::Combo("contact shadows mode", &m_contactShadowsMode, "hard\0soft\0very soft\0\0");
-					if (ImGui::IsItemHovered())
-					{
-						ImGui::BeginTooltip();
-						ImGui::Text("hard");
-						ImGui::BulletText("any occluder, fully shadowed");
-						ImGui::Text("soft");
-						ImGui::BulletText("modulate shadow by distance to first occluder");
-						ImGui::Text("very soft");
-						ImGui::BulletText("also reduce each shadow contribution by distance");
-						ImGui::EndTooltip();
-					}
-
-					ImGui::Checkbox("add random offset to initial position", &m_useNoiseOffset);
-					if (ImGui::IsItemHovered())
-						ImGui::SetTooltip("hide banding with noise");
-
-					ImGui::Checkbox("use different offset each frame", &m_dynamicNoise);
-					ImGui::Separator();
-
-					ImGui::Text("scene controls:");
-					ImGui::Checkbox("display shadows only", &m_displayShadows);
-					ImGui::Checkbox("move light", &m_moveLight);
+					m_uniforms.submit();
+					meshSubmit(m_meshes[m_lightModel.mesh], view, m_sphereProgram, mtx);
 				}
 
-				ImGui::End();
+				++view;
 			}
+
+			float orthoProj[16];
+			bx::mtxOrtho(orthoProj, 0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, caps->homogeneousDepth);
+			{
+				// clear out transform stack
+				float identity[16];
+				bx::mtxIdentity(identity);
+				bgfx::setTransform(identity);
+			}
+
+			// Convert depth to linear depth for shadow depth compare
+			{
+				bgfx::setViewName(view, "linear depth");
+
+				bgfx::setViewRect(view, 0, 0, uint16_t(m_width), uint16_t(m_height));
+				bgfx::setViewTransform(view, NULL, orthoProj);
+				bgfx::setViewFrameBuffer(view, m_linearDepth.m_buffer);
+				bgfx::setState(0
+					| BGFX_STATE_WRITE_RGB
+					| BGFX_STATE_WRITE_A
+					| BGFX_STATE_DEPTH_TEST_ALWAYS
+					);
+				bgfx::setTexture(0, s_depth, m_gbufferTex[GBUFFER_RT_DEPTH]);
+				m_uniforms.submit();
+				screenSpaceQuad(caps->originBottomLeft);
+				bgfx::submit(view, m_linearDepthProgram);
+				++view;
+			}
+
+			// Do screen space shadows
+			{
+				bgfx::setViewName(view, "screen space shadows");
+
+				bgfx::setViewRect(view, 0, 0, uint16_t(m_width), uint16_t(m_height));
+				bgfx::setViewTransform(view, NULL, orthoProj);
+				bgfx::setViewFrameBuffer(view, m_shadows.m_buffer);
+				bgfx::setState(0
+					| BGFX_STATE_WRITE_RGB
+					| BGFX_STATE_WRITE_A
+					| BGFX_STATE_DEPTH_TEST_ALWAYS
+					);
+				bgfx::setTexture(0, s_depth, m_linearDepth.m_texture);
+				m_uniforms.submit();
+				screenSpaceQuad(caps->originBottomLeft);
+				bgfx::submit(view, m_shadowsProgram);
+				++view;
+			}
+
+			// Shade gbuffer
+			{
+				bgfx::setViewName(view, "combine");
+
+				bgfx::setViewRect(view, 0, 0, uint16_t(m_width), uint16_t(m_height));
+				bgfx::setViewTransform(view, NULL, orthoProj);
+				bgfx::setViewFrameBuffer(view, BGFX_INVALID_HANDLE);
+				bgfx::setState(0
+					| BGFX_STATE_WRITE_RGB
+					| BGFX_STATE_WRITE_A
+					| BGFX_STATE_DEPTH_TEST_ALWAYS
+					);
+				bgfx::setTexture(0, s_color, m_gbufferTex[GBUFFER_RT_COLOR]);
+				bgfx::setTexture(1, s_normal, m_gbufferTex[GBUFFER_RT_NORMAL]);
+				bgfx::setTexture(2, s_depth, m_linearDepth.m_texture);
+				bgfx::setTexture(3, s_shadows, m_shadows.m_texture);
+				m_uniforms.submit();
+				screenSpaceQuad(caps->originBottomLeft);
+				bgfx::submit(view, m_combineProgram);
+				++view;
+			}
+
+			ImGui::SetNextWindowPos(
+				ImVec2(m_width - m_width / 4.0f - 10.0f, 10.0f)
+				, ImGuiCond_FirstUseEver
+				);
+			ImGui::SetNextWindowSize(
+				ImVec2(m_width / 4.0f, m_height / 2.3f)
+				, ImGuiCond_FirstUseEver
+				);
+			ImGui::Begin("Settings"
+				, NULL
+				, 0
+				);
+
+			ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.5f);
+
+			{
+				ImGui::Text("shadow controls:");
+				ImGui::Checkbox("screen space radius", &m_useScreenSpaceRadius);
+				if (ImGui::IsItemHovered())
+					ImGui::SetTooltip("define radius in pixels or world units");
+
+				if (m_useScreenSpaceRadius)
+				{
+					ImGui::SliderFloat("radius in pixels", &m_shadowRadiusPixels, 1.0f, 100.0f);
+				}
+				else
+				{
+					ImGui::SliderFloat("radius in world units", &m_shadowRadius, 1e-3f, 1.0f);
+				}
+
+				ImGui::SliderInt("shadow steps", &m_shadowSteps, 1, 64);
+				if (ImGui::IsItemHovered())
+					ImGui::SetTooltip("number of steps/samples to take between shaded pixel and radius");
+
+				ImGui::Combo("contact shadows mode", &m_contactShadowsMode, "hard\0soft\0very soft\0\0");
+				if (ImGui::IsItemHovered())
+				{
+					ImGui::BeginTooltip();
+					ImGui::Text("hard");
+					ImGui::BulletText("any occluder, fully shadowed");
+					ImGui::Text("soft");
+					ImGui::BulletText("modulate shadow by distance to first occluder");
+					ImGui::Text("very soft");
+					ImGui::BulletText("also reduce each shadow contribution by distance");
+					ImGui::EndTooltip();
+				}
+
+				ImGui::Checkbox("add random offset to initial position", &m_useNoiseOffset);
+				if (ImGui::IsItemHovered())
+					ImGui::SetTooltip("hide banding with noise");
+
+				ImGui::Checkbox("use different offset each frame", &m_dynamicNoise);
+				ImGui::Separator();
+
+				ImGui::Text("scene controls:");
+				ImGui::Checkbox("display shadows only", &m_displayShadows);
+				ImGui::Checkbox("move light", &m_moveLight);
+			}
+
+			ImGui::End();
 
 			imguiEndFrame();
 

@@ -250,13 +250,6 @@ public:
 
 			imguiEndFrame();
 
-			if (bgfx::getRendererType() == bgfx::RendererType::WebGPU)
-			{
-				bgfx::dbgTextPrintf(0, 0, 0x1f, " Sampling depth textures isn't possible yet with WebGPU. ");
-				bgfx::frame();
-				return true;
-			}
-
 			int64_t now = bx::getHPCounter();
 			const double freq = double(bx::getHPFrequency() );
 			float time = float( (now-m_timeOffset)/freq);

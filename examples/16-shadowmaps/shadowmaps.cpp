@@ -1809,14 +1809,6 @@ public:
 
 			const bgfx::Caps* caps = bgfx::getCaps();
 
-			if (bgfx::getRendererType() == bgfx::RendererType::WebGPU)
-			{
-				imguiEndFrame();
-				bgfx::dbgTextPrintf(0, 0, 0x1f, " Sampling depth textures isn't possible yet with WebGPU. ");
-				bgfx::frame();
-				return true;
-			}
-
 			// Set view and projection matrices.
 			const float camFovy    = 60.0f;
 			const float camAspect  = float(int32_t(m_viewState.m_width) ) / float(int32_t(m_viewState.m_height) );
