@@ -802,7 +802,7 @@ namespace bgfx { namespace spirv
 								| (isCompareSampler ? kUniformCompareBit : 0)
 								);
 
-						un.texComponent = textureComponentTypeToId(SpirvCrossBaseTypeToFormatType(componentType, imageType.depth) );
+						un.texComponent = textureComponentTypeToId(SpirvCrossBaseTypeToFormatType(componentType, imageType.depth || (convertToWGSL && isCompareSampler)) );
 						un.texDimension = textureDimensionToId(SpirvDimToTextureViewDimension(imageType.dim, imageType.arrayed) );
 						un.texFormat = uint16_t(s_textureFormats[imageType.format]);
 
