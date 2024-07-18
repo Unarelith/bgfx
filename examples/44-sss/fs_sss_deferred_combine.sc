@@ -11,7 +11,7 @@ $input v_texcoord0
 
 SAMPLER2D(s_color, 0);
 SAMPLER2D(s_normal, 1);
-SAMPLER2DDEPTH(s_depth, 2);
+SAMPLER2D(s_depth, 2);
 SAMPLER2D(s_shadows, 3);
 
 // from assao sample, cs_assao_prepare_depths.sc
