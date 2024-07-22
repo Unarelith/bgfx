@@ -80,7 +80,11 @@ namespace
 #define SHADOW_RT_DEPTH 1        // Shadow maps always write a depth
 
 // Random meshes we draw
+#if BX_PLATFORM_EMSCRIPTEN
+#define MODEL_COUNT 111  // In this demo, a model is a mesh plus a transform and a color
+#else
 #define MODEL_COUNT 222  // In this demo, a model is a mesh plus a transform and a color
+#endif // BX_PLATFORM_EMSCRIPTEN
 
 #define SHADOW_MAP_DIM 512
 #define LIGHT_DIST 10.0f
