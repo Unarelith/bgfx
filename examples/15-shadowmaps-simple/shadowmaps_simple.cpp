@@ -72,7 +72,7 @@ public:
 
 		m_width  = _width;
 		m_height = _height;
-		m_debug = BGFX_DEBUG_TEXT;
+		m_debug = BGFX_DEBUG_NONE;
 		m_reset = BGFX_RESET_VSYNC;
 
 		bgfx::Init init;

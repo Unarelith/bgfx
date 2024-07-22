@@ -254,7 +254,7 @@ public:
 
 		m_width = _width;
 		m_height = _height;
-		m_debug = BGFX_DEBUG_TEXT;
+		m_debug = BGFX_DEBUG_NONE;
 		m_reset = BGFX_RESET_VSYNC;
 
 		bgfx::Init init;
@@ -382,19 +382,6 @@ public:
 			{
 				return true;
 			}
-
-			// Draw UI
-			imguiBeginFrame(m_mouseState.m_mx
-				, m_mouseState.m_my
-				, (m_mouseState.m_buttons[entry::MouseButton::Left] ? IMGUI_MBUT_LEFT : 0)
-				| (m_mouseState.m_buttons[entry::MouseButton::Right] ? IMGUI_MBUT_RIGHT : 0)
-				| (m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
-				, m_mouseState.m_mz
-				, uint16_t(m_width)
-				, uint16_t(m_height)
-				);
-
-			showExampleDialog(this);
 
 			// Update frame timer
 			int64_t now = bx::getHPCounter();
@@ -553,6 +540,19 @@ public:
 				bgfx::submit(view, m_combineProgram);
 				++view;
 			}
+
+			// Draw UI
+			imguiBeginFrame(m_mouseState.m_mx
+				, m_mouseState.m_my
+				, (m_mouseState.m_buttons[entry::MouseButton::Left] ? IMGUI_MBUT_LEFT : 0)
+				| (m_mouseState.m_buttons[entry::MouseButton::Right] ? IMGUI_MBUT_RIGHT : 0)
+				| (m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
+				, m_mouseState.m_mz
+				, uint16_t(m_width)
+				, uint16_t(m_height)
+				);
+
+			showExampleDialog(this);
 
 			ImGui::SetNextWindowPos(
 				ImVec2(m_width - m_width / 4.0f - 10.0f, 10.0f)

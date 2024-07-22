@@ -1143,7 +1143,7 @@ public:
 	{
 		Args args(_argc, _argv);
 
-		m_debug = BGFX_DEBUG_TEXT;
+		m_debug = BGFX_DEBUG_NONE;
 		m_reset = BGFX_RESET_VSYNC;
 
 		m_width  = _width;
@@ -1792,18 +1792,6 @@ public:
 			m_viewState.m_width  = uint16_t(m_width);
 			m_viewState.m_height = uint16_t(m_height);
 
-			imguiBeginFrame(m_mouseState.m_mx
-							, m_mouseState.m_my
-							, (m_mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT   : 0)
-							| (m_mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT  : 0)
-							| (m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
-							, m_mouseState.m_mz
-							, m_viewState.m_width
-							, m_viewState.m_height
-							);
-
-			showExampleDialog(this);
-
 			const bgfx::Caps* caps = bgfx::getCaps();
 
 			// Set view and projection matrices.
@@ -1824,6 +1812,18 @@ public:
 			//		s_uniforms.submitConstUniforms();
 
 			// Imgui.
+			imguiBeginFrame(m_mouseState.m_mx
+							, m_mouseState.m_my
+							, (m_mouseState.m_buttons[entry::MouseButton::Left  ] ? IMGUI_MBUT_LEFT   : 0)
+							| (m_mouseState.m_buttons[entry::MouseButton::Right ] ? IMGUI_MBUT_RIGHT  : 0)
+							| (m_mouseState.m_buttons[entry::MouseButton::Middle] ? IMGUI_MBUT_MIDDLE : 0)
+							, m_mouseState.m_mz
+							, m_viewState.m_width
+							, m_viewState.m_height
+							);
+
+			showExampleDialog(this);
+
 			ImGui::SetNextWindowPos(
 				  ImVec2(m_viewState.m_width - m_viewState.m_width / 5.0f - 10.0f, 10.0f)
 				, ImGuiCond_FirstUseEver
