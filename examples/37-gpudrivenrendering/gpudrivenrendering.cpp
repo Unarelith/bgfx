@@ -1056,8 +1056,8 @@ public:
 			}
 			else if (0 == (BGFX_CAPS_DRAW_INDIRECT & caps->supported) )
 			{
-				// When instancing is not supported by GPU, implement alternative
-				// code path that doesn't use instancing.
+				// When draw indirect is not supported by GPU, implement alternative
+				// code path that doesn't use draw indirect.
 				float time = (float)((bx::getHPCounter() - m_timeOffset) / double(bx::getHPFrequency()));
 				bool blink = uint32_t(time*3.0f)&1;
 				bgfx::dbgTextPrintf(0, 0, blink ? 0x1f : 0x01, " Draw indirect is not supported by GPU. ");
