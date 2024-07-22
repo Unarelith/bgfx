@@ -43,7 +43,7 @@ Supported rendering backends:
  * Vulkan
  * WebGL 1.0
  * WebGL 2.0
- * WebGPU/Dawn (experimental)
+ * WebGPU
 
 Supported platforms:
 
