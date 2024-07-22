@@ -7,4 +7,4 @@ src/renderer_mtl.*           @attilaz
 src/renderer_vk.*            @rinthel @pezcode
 
 # WebGPU
-src/renderer_webgpu.*        @hugoam
+src/renderer_webgpu.*        @hugoam @Unarelith
