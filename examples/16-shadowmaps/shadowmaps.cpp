@@ -1722,24 +1722,21 @@ public:
 
 		ShadowMapSettings* currentSmSettings = &m_smSettings[m_settings.m_lightType][m_settings.m_depthImpl][m_settings.m_smImpl];
 
-		if (bgfx::getRendererType() != bgfx::RendererType::WebGPU)
+		// Render targets.
+		uint16_t shadowMapSize = 1 << uint32_t(currentSmSettings->m_sizePwrTwo);
+		m_currentShadowMapSize = shadowMapSize;
+		float currentShadowMapSizef = float(int16_t(m_currentShadowMapSize) );
+		s_uniforms.m_shadowMapTexelSize = 1.0f / currentShadowMapSizef;
+		for (uint8_t ii = 0; ii < ShadowMapRenderTargets::Count; ++ii)
 		{
-			// Render targets.
-			uint16_t shadowMapSize = 1 << uint32_t(currentSmSettings->m_sizePwrTwo);
-			m_currentShadowMapSize = shadowMapSize;
-			float currentShadowMapSizef = float(int16_t(m_currentShadowMapSize) );
-			s_uniforms.m_shadowMapTexelSize = 1.0f / currentShadowMapSizef;
-			for (uint8_t ii = 0; ii < ShadowMapRenderTargets::Count; ++ii)
+			bgfx::TextureHandle fbtextures[] =
 			{
-				bgfx::TextureHandle fbtextures[] =
-				{
-					bgfx::createTexture2D(m_currentShadowMapSize, m_currentShadowMapSize, false, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_RT),
-					bgfx::createTexture2D(m_currentShadowMapSize, m_currentShadowMapSize, false, 1, bgfx::TextureFormat::D32F,  BGFX_TEXTURE_RT),
-				};
-				s_rtShadowMap[ii] = bgfx::createFrameBuffer(BX_COUNTOF(fbtextures), fbtextures, true);
-			}
-			s_rtBlur = bgfx::createFrameBuffer(m_currentShadowMapSize, m_currentShadowMapSize, bgfx::TextureFormat::BGRA8);
+				bgfx::createTexture2D(m_currentShadowMapSize, m_currentShadowMapSize, false, 1, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_RT),
+				bgfx::createTexture2D(m_currentShadowMapSize, m_currentShadowMapSize, false, 1, bgfx::TextureFormat::D32F,  BGFX_TEXTURE_RT),
+			};
+			s_rtShadowMap[ii] = bgfx::createFrameBuffer(BX_COUNTOF(fbtextures), fbtextures, true);
 		}
+		s_rtBlur = bgfx::createFrameBuffer(m_currentShadowMapSize, m_currentShadowMapSize, bgfx::TextureFormat::BGRA8);
 
 		// Setup camera.
 		cameraCreate();
