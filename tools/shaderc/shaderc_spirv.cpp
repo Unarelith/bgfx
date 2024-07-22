@@ -716,9 +716,6 @@ namespace bgfx { namespace spirv
 				glslang::TIntermediate* intermediate = program->getIntermediate(stage);
 				std::vector<uint32_t> spirv;
 
-				// const std::string &s = intermediate->getSourceText();
-				// bx::write(_messageWriter, &messageErr, "%s\n", s.c_str());
-
 				glslang::SpvOptions options;
 				options.disableOptimizer = _options.debugInformation;
 				options.generateDebugInfo = _options.debugInformation;
@@ -924,10 +921,6 @@ namespace bgfx { namespace spirv
 							system("del tmp.spv");
 
 						system("del tmp.wgsl");
-
-						// std::cout << "fileSize: " << fileSize << std::endl;
-						// std::cout.write((const char *)spirv.data(), fileSize);
-						// std::cout << std::endl;
 					}
 
 					uint32_t shaderSize = (uint32_t)spirv.size() * sizeof(uint32_t);
