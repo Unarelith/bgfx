@@ -638,10 +638,18 @@ float bgfxShadow2DProj(sampler2DShadow _sampler, vec4 _coord)
 
 #	endif // BGFX_SHADER_LANGUAGE_HLSL > 300
 
+#	if BGFX_SHADER_LANGUAGE_WGSL && BGFX_SHADER_TYPE_COMPUTE
+#		define mul(_a, _b) ( (_a) * (_b) )
+vec3 instMul(vec3 _vec, mat3 _mtx) { return mul(_vec, _mtx); }
+vec3 instMul(mat3 _mtx, vec3 _vec) { return mul(_mtx, _vec); }
+vec4 instMul(vec4 _vec, mat4 _mtx) { return mul(_vec, _mtx); }
+vec4 instMul(mat4 _mtx, vec4 _vec) { return mul(_mtx, _vec); }
+#	else 
 vec3 instMul(vec3 _vec, mat3 _mtx) { return mul(_mtx, _vec); }
 vec3 instMul(mat3 _mtx, vec3 _vec) { return mul(_vec, _mtx); }
 vec4 instMul(vec4 _vec, mat4 _mtx) { return mul(_mtx, _vec); }
 vec4 instMul(mat4 _mtx, vec4 _vec) { return mul(_vec, _mtx); }
+#	endif // BGFX_SHADER_LANGUAGE_WGSL && BGFX_SHADER_TYPE_COMPUTE
 
 bvec2 lessThan(vec2 _a, vec2 _b) { return _a < _b; }
 bvec3 lessThan(vec3 _a, vec3 _b) { return _a < _b; }
