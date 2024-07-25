@@ -8,6 +8,8 @@
 #include <iostream> // std::cout
 #include <fstream> // std::ofstream
 
+#include <random> // std::random_device
+
 BX_PRAGMA_DIAGNOSTIC_PUSH()
 BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4100) // error C4100: 'inclusionDepth' : unreferenced formal parameter
 BX_PRAGMA_DIAGNOSTIC_IGNORED_MSVC(4265) // error C4265: 'spv::spirvbin_t': class has virtual functions, but destructor is not virtual
@@ -867,6 +869,28 @@ namespace bgfx { namespace spirv
 
 					if (convertToWGSL)
 					{
+						static std::string chars{"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"};
+						static std::random_device rd;
+						static std::mt19937 generator(rd());
+						static auto rand_str = [&](int length)
+						{
+							std::string output;
+							output.reserve(length);
+
+							while (length > 0)
+							{
+								auto randNumb = generator();
+								while (randNumb > 93 && length--)
+								{
+									output.push_back(chars[randNumb % 93]);
+									randNumb /= 93;
+								}
+							}
+							return output;
+						};
+
+						std::string name = rand_str(10);
+
 						bool useTint = _options.shaderType == 'c';
 						if (useTint)
 						{
@@ -875,24 +899,24 @@ namespace bgfx { namespace spirv
 							while ((rowMajor = disasmStr.find("RowMajor")) != std::string::npos)
 								disasmStr.replace(rowMajor, 3, "Col");
 
-							std::ofstream tmp("tmp.spvasm");
+							std::ofstream tmp(name + ".spvasm");
 							assert(tmp.is_open());
 							tmp.write(disasmStr.c_str(), disasmStr.length());
 							tmp.close();
 
-							system("D:\\Dev\\Projects\\bgfx.cmake\\dawn\\cmake-build\\Debug\\tint.exe --allow-non-uniform-derivatives tmp.spvasm -f wgsl -o tmp.wgsl");
+							system(("D:\\Dev\\Projects\\bgfx.cmake\\dawn\\cmake-build\\Debug\\tint.exe --allow-non-uniform-derivatives " + name + ".spvasm -f wgsl -o " + name + ".wgsl").c_str());
 						}
 						else
 						{
-							std::ofstream tmp("tmp.spv", std::ios::binary);
+							std::ofstream tmp(name + ".spv", std::ios::binary);
 							assert(tmp.is_open());
 							tmp.write((const char *)spirv.data(), spirv.size() * 4);
 							tmp.close();
 
-							system("naga tmp.spv tmp.wgsl --keep-coordinate-space");
+							system(("naga " + name + ".spv " + name + ".wgsl --keep-coordinate-space").c_str());
 						}
 
-						std::ifstream file("tmp.wgsl");
+						std::ifstream file(name + ".wgsl");
 						assert(file.is_open());
 						file.seekg(0, std::ios::end);
 						std::streampos fileSize = file.tellg();
@@ -916,20 +940,17 @@ namespace bgfx { namespace spirv
 						std::memcpy(spirv.data(), wgsl.data(), fileSize);
 
 #ifdef _WIN32
-						if (useTint)
-							system("del tmp.spvasm");
-						else
-							system("del tmp.spv");
-
-						system("del tmp.wgsl");
+#define RM "del"
 #else
-						if (useTint)
-							system("rm tmp.spvasm");
-						else
-							system("rm tmp.spv");
-
-						system("rm tmp.wgsl");
+#define RM "rm"
 #endif
+
+						if (useTint)
+							system((RM " " + name + ".spvasm").c_str());
+						else
+							system((RM " " + name + ".spv").c_str());
+
+						system((RM " " + name + ".wgsl").c_str());
 					}
 
 					uint32_t shaderSize = (uint32_t)spirv.size() * sizeof(uint32_t);
