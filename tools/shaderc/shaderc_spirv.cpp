@@ -915,12 +915,21 @@ namespace bgfx { namespace spirv
 						spirv.resize(numElements + 1);
 						std::memcpy(spirv.data(), wgsl.data(), fileSize);
 
+#ifdef _WIN32
 						if (useTint)
 							system("del tmp.spvasm");
 						else
 							system("del tmp.spv");
 
 						system("del tmp.wgsl");
+#else
+						if (useTint)
+							system("rm tmp.spvasm");
+						else
+							system("rm tmp.spv");
+
+						system("rm tmp.wgsl");
+#endif
 					}
 
 					uint32_t shaderSize = (uint32_t)spirv.size() * sizeof(uint32_t);
