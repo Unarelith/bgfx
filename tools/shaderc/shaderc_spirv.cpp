@@ -869,24 +869,19 @@ namespace bgfx { namespace spirv
 
 					if (convertToWGSL)
 					{
-						static std::string chars{"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"};
-						static std::random_device rd;
-						static std::mt19937 generator(rd());
-						static auto rand_str = [&](int length)
-						{
-							std::string output;
-							output.reserve(length);
+						static auto rand_str = [&](size_t length) {
+							static auto& chrs = "0123456789"
+							                    "abcdefghijklmnopqrstuvwxyz"
+							                    "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-							while (length > 0)
-							{
-								auto randNumb = generator();
-								while (randNumb > 93 && length--)
-								{
-									output.push_back(chars[randNumb % 93]);
-									randNumb /= 93;
-								}
-							}
-							return output;
+							thread_local static std::mt19937 rg{std::random_device{}()};
+							thread_local static std::uniform_int_distribution<std::string::size_type> pick(0, sizeof(chrs) - 2);
+
+							std::string s;
+							s.reserve(length);
+							while (length--)
+								s += chrs[pick(rg)];
+							return s;
 						};
 
 						std::string name = rand_str(10);
