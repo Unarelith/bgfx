@@ -1256,9 +1256,6 @@ namespace bgfx { namespace webgpu
 
 		void updateResolution(const Resolution& _resolution)
 		{
-			m_resolution = _resolution;
-			return; // TODO (hugoam)
-
 			m_mainFrameBuffer.m_swapChain->m_maxAnisotropy = !!(_resolution.reset & BGFX_RESET_MAXANISOTROPY)
 				? 16
 				: 1
@@ -1274,8 +1271,8 @@ namespace bgfx { namespace webgpu
 			||  m_resolution.height           !=  _resolution.height
 			|| (m_resolution.reset&maskFlags) != (_resolution.reset&maskFlags) )
 			{
-				wgpu::TextureFormat prevMetalLayerPixelFormat; // = m_mainFrameBuffer.m_swapChain->m_metalLayer.pixelFormat;
-				BX_UNUSED(prevMetalLayerPixelFormat);
+				// wgpu::TextureFormat prevMetalLayerPixelFormat; // = m_mainFrameBuffer.m_swapChain->m_metalLayer.pixelFormat;
+				// BX_UNUSED(prevMetalLayerPixelFormat);
 
 				m_resolution = _resolution;
 				m_resolution.reset &= ~BGFX_RESET_INTERNAL_FORCE;
