@@ -7,6 +7,7 @@
 
 #include <iostream> // std::cout
 #include <fstream> // std::ofstream
+#include <sstream> // std::stringstream
 
 #include <random> // std::random_device
 
